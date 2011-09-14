@@ -2,14 +2,13 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
 /**
  * Class for a table column.
  *
  * @package ActiveRecord
  */
-class Column
+class ActiveRecord_Column
 {
 	// types for $type
 	const STRING	= 1;
@@ -124,11 +123,11 @@ class Column
 				if (!$value)
 					return null;
 
-				if ($value instanceof DateTime)
+				if ($value instanceof ActiveRecord_DateTime)
 					return $value;
 
-				if ($value instanceof \DateTime)
-					return new DateTime($value->format('Y-m-d H:i:s T'));
+				if ($value instanceof DateTime)
+					return new ActiveRecord_DateTime($value->format('Y-m-d H:i:s T'));
 
 				return $connection->string_to_datetime($value);
 		}

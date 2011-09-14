@@ -2,14 +2,13 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
 /**
  * Adapter for Postgres (not completed yet)
- * 
+ *
  * @package ActiveRecord
  */
-class PgsqlAdapter extends Connection
+class ActiveRecord_PgsqlAdapter extends ActiveRecord_Connection
 {
 	static $QUOTE_CHARACTER = '"';
 	static $DEFAULT_PORT = 5432;
@@ -39,7 +38,7 @@ class PgsqlAdapter extends Connection
 		$sql = <<<SQL
 SELECT a.attname AS field, a.attlen,
 REPLACE(pg_catalog.format_type(a.atttypid, a.atttypmod),'character varying','varchar') AS type,
-a.attnotnull AS not_nullable, 
+a.attnotnull AS not_nullable,
 i.indisprimary as pk,
 REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(s.column_default,'::[a-z_ ]+',''),'\'$',''),'^\'','') AS default
 FROM pg_catalog.pg_attribute a
@@ -62,8 +61,8 @@ SQL;
 
 	public function create_column(&$column)
 	{
-		$c = new Column();
-		$c->inflected_name	= Inflector::instance()->variablize($column['field']);
+		$c = new ActiveRecord_Column();
+		$c->inflected_name	= ActiveRecord_Inflector::instance()->variablize($column['field']);
 		$c->name			= $column['field'];
 		$c->nullable		= ($column['not_nullable'] ? false : true);
 		$c->pk				= ($column['pk'] ? true : false);

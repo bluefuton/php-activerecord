@@ -2,8 +2,6 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
-use XmlWriter;
 
 /**
  * Base class for Model serializers.
@@ -40,7 +38,7 @@ use XmlWriter;
  * @package ActiveRecord
  * @link http://www.phpactiverecord.org/guides/utilities#topic-serialization
  */
-abstract class Serialization
+abstract class ActiveRecord_Serialization
 {
 	protected $model;
 	protected $options;
@@ -93,7 +91,7 @@ abstract class Serialization
 	 * @param array &$options Options for serialization
 	 * @return Serialization
 	 */
-	public function __construct(Model $model, &$options)
+	public function __construct(ActiveRecord_Model $model, &$options)
 	{
 		$this->model = $model;
 		$this->options = $options;
@@ -199,7 +197,7 @@ abstract class Serialization
 						$this->attributes[$association] = $includes;
 					}
 
-				} catch (UndefinedPropertyException $e) {
+				} catch (ActiveRecord_UndefinedPropertyException $e) {
 					;//move along
 				}
 			}
@@ -220,7 +218,7 @@ abstract class Serialization
 	{
 		foreach ($this->attributes as &$value)
 		{
-			if ($value instanceof \DateTime)
+			if ($value instanceof DateTime)
 				$value = $value->format(self::$DATETIME_FORMAT);
 		}
 		return $this->attributes;
@@ -248,7 +246,7 @@ abstract class Serialization
  *
  * @package ActiveRecord
  */
-class ArraySerializer extends Serialization
+class ActiveRecord_ArraySerializer extends ActiveRecord_Serialization
 {
 	public static $include_root = false;
 
@@ -263,7 +261,7 @@ class ArraySerializer extends Serialization
  *
  * @package ActiveRecord
  */
-class JsonSerializer extends ArraySerializer
+class ActiveRecord_JsonSerializer extends ActiveRecord_ArraySerializer
 {
 	public static $include_root = false;
 
@@ -279,7 +277,7 @@ class JsonSerializer extends ArraySerializer
  *
  * @package ActiveRecord
  */
-class XmlSerializer extends Serialization
+class ActiveRecord_XmlSerializer extends ActiveRecord_Serialization
 {
 	private $writer;
 
@@ -342,7 +340,7 @@ class XmlSerializer extends Serialization
  *
  * @package ActiveRecord
  */
-class CsvSerializer extends Serialization
+class ActiveRecord_CsvSerializer extends ActiveRecord_Serialization
 {
   public static $delimiter = ',';
   public static $enclosure = '"';

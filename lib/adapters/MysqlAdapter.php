@@ -2,14 +2,13 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
 /**
  * Adapter for MySQL.
  *
  * @package ActiveRecord
  */
-class MysqlAdapter extends Connection
+class ActiveRecord_MysqlAdapter extends ActiveRecord_Connection
 {
 	static $DEFAULT_PORT = 3306;
 
@@ -32,8 +31,8 @@ class MysqlAdapter extends Connection
 
 	public function create_column(&$column)
 	{
-		$c = new Column();
-		$c->inflected_name	= Inflector::instance()->variablize($column['field']);
+		$c = new ActiveRecord_Column();
+		$c->inflected_name	= ActiveRecord_Inflector::instance()->variablize($column['field']);
 		$c->name			= $column['field'];
 		$c->nullable		= ($column['null'] === 'YES' ? true : false);
 		$c->pk				= ($column['key'] === 'PRI' ? true : false);

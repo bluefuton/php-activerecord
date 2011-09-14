@@ -2,8 +2,6 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
-use Closure;
 
 /**
  * Callbacks allow the programmer to hook into the life cycle of a {@link Model}.
@@ -56,7 +54,7 @@ use Closure;
  * @package ActiveRecord
  * @link http://www.phpactiverecord.org/guides/callbacks
  */
-class CallBack
+class ActiveRecord_CallBack
 {
 	/**
 	 * List of available callbacks.
@@ -109,7 +107,7 @@ class CallBack
 	 */
 	public function __construct($model_class_name)
 	{
-		$this->klass = Reflections::instance()->get($model_class_name);
+		$this->klass = ActiveRecord_Reflections::instance()->get($model_class_name);
 
 		foreach (static::$VALID_CALLBACKS as $name)
 		{
@@ -185,7 +183,7 @@ class CallBack
 		{
 			foreach ($registry as $method)
 			{
-				$ret = ($method instanceof Closure ? $method($model) : $model->$method());
+				$ret = $model->$method();
 
 				if (false === $ret && $first === 'before')
 					return false;
@@ -218,25 +216,22 @@ class CallBack
 		if (!in_array($name,self::$VALID_CALLBACKS))
 			throw new ActiveRecordException("Invalid callback: $name");
 
-		if (!($closure_or_method_name instanceof Closure))
-		{
-			if (!isset($this->publicMethods))
-				$this->publicMethods = get_class_methods($this->klass->getName());
+		if (!isset($this->publicMethods))
+			$this->publicMethods = get_class_methods($this->klass->getName());
 
-			if (!in_array($closure_or_method_name, $this->publicMethods))
+		if (!in_array($closure_or_method_name, $this->publicMethods))
+		{
+			if ($this->klass->hasMethod($closure_or_method_name))
 			{
-				if ($this->klass->hasMethod($closure_or_method_name))
-				{
-					// Method is private or protected
-					throw new ActiveRecordException("Callback methods need to be public (or anonymous closures). " .
-						"Please change the visibility of " . $this->klass->getName() . "->" . $closure_or_method_name . "()");
-				}
-				else
-				{
-					// i'm a dirty ruby programmer
-					throw new ActiveRecordException("Unknown method for callback: $name" .
-						(is_string($closure_or_method_name) ? ": #$closure_or_method_name" : ""));
-				}
+				// Method is private or protected
+				throw new ActiveRecordException("Callback methods need to be public (or anonymous closures). " .
+					"Please change the visibility of " . $this->klass->getName() . "->" . $closure_or_method_name . "()");
+			}
+			else
+			{
+				// i'm a dirty ruby programmer
+				throw new ActiveRecordException("Unknown method for callback: $name" .
+					(is_string($closure_or_method_name) ? ": #$closure_or_method_name" : ""));
 			}
 		}
 

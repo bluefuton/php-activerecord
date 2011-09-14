@@ -8,10 +8,6 @@
  * @package ActiveRecord
  */
 
-namespace ActiveRecord;
-use ActiveRecord\Model;
-use IteratorAggregate;
-use ArrayIterator;
 
 /**
  * Manages validations for a {@link Model}.
@@ -39,7 +35,7 @@ use ArrayIterator;
  * @see Errors
  * @link http://www.phpactiverecord.org/guides/validations
  */
-class Validations
+class ActiveRecord_Validations
 {
 	private $model;
 	private $options = array();
@@ -88,11 +84,11 @@ class Validations
 	 * @param Model $model The model to validate
 	 * @return Validations
 	 */
-	public function __construct(Model $model)
+	public function __construct(ActiveRecord_Model $model)
 	{
 		$this->model = $model;
-		$this->record = new Errors($this->model);
-		$this->klass = Reflections::instance()->get(get_class($this->model));
+		$this->record = new ActiveRecord_Errors($this->model);
+		$this->klass = ActiveRecord_Reflections::instance()->get(get_class($this->model));
 		$this->validators = array_intersect(array_keys($this->klass->getStaticProperties()), self::$VALIDATION_FUNCTIONS);
 	}
 
@@ -249,7 +245,7 @@ class Validations
 	 */
 	public function validates_inclusion_or_exclusion_of($type, $attrs)
 	{
-		$configuration = array_merge(self::$DEFAULT_VALIDATION_OPTIONS, array('message' => Errors::$DEFAULT_ERROR_MESSAGES[$type], 'on' => 'save'));
+		$configuration = array_merge(self::$DEFAULT_VALIDATION_OPTIONS, array('message' => ActiveRecord_Errors::$DEFAULT_ERROR_MESSAGES[$type], 'on' => 'save'));
 
 		foreach ($attrs as $attr)
 		{
@@ -352,7 +348,7 @@ class Validations
 					$option_value = (float)$options[$option];
 
 					if (!is_numeric($option_value))
-						throw new ValidationsArgumentError("$option must be a number");
+						throw new ActiveRecord_ValidationsArgumentError("$option must be a number");
 
 					$message = str_replace('%d', $option_value, $message);
 
@@ -373,7 +369,7 @@ class Validations
 				}
 				else
 				{
-					if (('odd' == $option && !Utils::is_odd($var)) || ('even' == $option && Utils::is_odd($var)))
+					if (('odd' == $option && !ActiveRecord_Utils::is_odd($var)) || ('even' == $option && ActiveRecord_Utils::is_odd($var)))
 						$this->record->add($attribute, $message);
 				}
 			}
@@ -423,7 +419,7 @@ class Validations
 			$var = $this->model->$attribute;
 
 			if (is_null($options['with']) || !is_string($options['with']) || !is_string($options['with']))
-				throw new ValidationsArgumentError('A regular expression must be supplied as the [with] option of the configuration array.');
+				throw new ActiveRecord_ValidationsArgumentError('A regular expression must be supplied as the [with] option of the configuration array.');
 			else
 				$expression = $options['with'];
 
@@ -462,9 +458,9 @@ class Validations
 	public function validates_length_of($attrs)
 	{
 		$configuration = array_merge(self::$DEFAULT_VALIDATION_OPTIONS, array(
-			'too_long'     => Errors::$DEFAULT_ERROR_MESSAGES['too_long'],
-			'too_short'    => Errors::$DEFAULT_ERROR_MESSAGES['too_short'],
-			'wrong_length' => Errors::$DEFAULT_ERROR_MESSAGES['wrong_length']
+			'too_long'     => ActiveRecord_Errors::$DEFAULT_ERROR_MESSAGES['too_long'],
+			'too_short'    => ActiveRecord_Errors::$DEFAULT_ERROR_MESSAGES['too_short'],
+			'wrong_length' => ActiveRecord_Errors::$DEFAULT_ERROR_MESSAGES['wrong_length']
 		));
 
 		foreach ($attrs as $attr)
@@ -476,13 +472,13 @@ class Validations
 			switch (sizeof($range_options))
 			{
 				case 0:
-					throw new  ValidationsArgumentError('Range unspecified.  Specify the [within], [maximum], or [is] option.');
+					throw new  ActiveRecord_ValidationsArgumentError('Range unspecified.  Specify the [within], [maximum], or [is] option.');
 
 				case 1:
 					break;
 
 				default:
-					throw new  ValidationsArgumentError('Too many range options specified.  Choose only one.');
+					throw new  ActiveRecord_ValidationsArgumentError('Too many range options specified.  Choose only one.');
 			}
 
 			$attribute = $options[0];
@@ -494,7 +490,7 @@ class Validations
 				$range = $options[$range_options[0]];
 
 				if (!(Utils::is_a('range', $range)))
-					throw new  ValidationsArgumentError("$range_option must be an array composing a range of numbers with key [0] being less than key [1]");
+					throw new  ActiveRecord_ValidationsArgumentError("$range_option must be an array composing a range of numbers with key [0] being less than key [1]");
 				$range_options = array('minimum', 'maximum');
 				$attr['minimum'] = $range[0];
 				$attr['maximum'] = $range[1];
@@ -504,10 +500,10 @@ class Validations
 				$option = $attr[$range_option];
 
 				if ((int)$option <= 0)
-					throw new  ValidationsArgumentError("$range_option value cannot use a signed integer.");
+					throw new  ActiveRecord_ValidationsArgumentError("$range_option value cannot use a signed integer.");
 
 				if (is_float($option))
-					throw new  ValidationsArgumentError("$range_option value cannot use a float for length.");
+					throw new  ActiveRecord_ValidationsArgumentError("$range_option value cannot use a float for length.");
 
 				if (!($range_option == 'maximum' && is_null($this->model->$attribute)))
 				{
@@ -517,7 +513,7 @@ class Validations
 						$message = $options['message'];
 					else
 						$message = $options[$messageOptions[$range_option]];
-					
+
 
 					$message = str_replace('%d', $option, $message);
 					$attribute_value = $this->model->$attribute;
@@ -563,7 +559,7 @@ class Validations
 	public function validates_uniqueness_of($attrs)
 	{
 		$configuration = array_merge(self::$DEFAULT_VALIDATION_OPTIONS, array(
-			'message' => Errors::$DEFAULT_ERROR_MESSAGES['unique']
+			'message' => ActiveRecord_Errors::$DEFAULT_ERROR_MESSAGES['unique']
 		));
 
 		foreach ($attrs as $attr)
@@ -624,7 +620,7 @@ class Validations
  *
  * @package ActiveRecord
  */
-class Errors implements IteratorAggregate
+class ActiveRecord_Errors implements IteratorAggregate
 {
 	private $model;
 	private $errors;
@@ -658,7 +654,7 @@ class Errors implements IteratorAggregate
 	 * @param Model $model The model the error is for
 	 * @return Errors
 	 */
-	public function __construct(Model $model)
+	public function __construct(ActiveRecord_Model $model)
 	{
 		$this->model = $model;
 	}
@@ -829,7 +825,7 @@ class Errors implements IteratorAggregate
 					if (is_null($msg))
 						continue;
 
-					$errors[$attribute][] = ($message = Utils::human_attribute($attribute) . ' ' . $msg);
+					$errors[$attribute][] = ($message = ActiveRecord_Utils::human_attribute($attribute) . ' ' . $msg);
 
 					if ($closure)
 						$closure($attribute,$message);

@@ -2,14 +2,13 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
 /**
  * Helper class for building sql statements progmatically.
  *
  * @package ActiveRecord
  */
-class SQLBuilder
+class ActiveRecord_SQLBuilder
 {
 	private $connection;
 	private $operation = 'SELECT';
@@ -297,7 +296,7 @@ class SQLBuilder
 		if ($num_args == 1 && is_hash($args[0]))
 		{
 			$hash = is_null($this->joins) ? $args[0] : $this->prepend_table_name_to_fields($args[0]);
-			$e = new Expressions($this->connection,$hash);
+			$e = new ActiveRecord_Expressions($this->connection,$hash);
 			$this->where = $e->to_s();
 			$this->where_values = array_flatten($e->values());
 		}
@@ -310,7 +309,7 @@ class SQLBuilder
 			{
 				if (is_array($value))
 				{
-					$e = new Expressions($this->connection,$args[0]);
+					$e = new ActiveRecord_Expressions($this->connection,$args[0]);
 					$e->bind_values($values);
 					$this->where = $e->to_s();
 					$this->where_values = array_flatten($e->values());
@@ -357,7 +356,7 @@ class SQLBuilder
 		else
 			$sql = "INSERT INTO $this->table($keys) VALUES(?)";
 
-		$e = new Expressions($this->connection,$sql,array_values($this->data));
+		$e = new ActiveRecord_Expressions($this->connection,$sql,array_values($this->data));
 		return $e->to_s();
 	}
 

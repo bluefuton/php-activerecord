@@ -2,8 +2,6 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
-use Closure;
 
 /**
  * Manages configuration options for ActiveRecord.
@@ -19,7 +17,7 @@ use Closure;
  *
  * @package ActiveRecord
  */
-class Config extends Singleton
+class ActiveRecord_Config extends ActiveRecord_Singleton
 {
 	/**
 	 * Name of the connection to use by default.
@@ -77,7 +75,7 @@ class Config extends Singleton
 	 *
 	 * @var string
 	 */
-	private $date_format = \DateTime::ISO8601;
+	private $date_format = DateTime::ISO8601;
 
 	/**
 	 * Allows config initialization using a closure.
@@ -104,7 +102,7 @@ class Config extends Singleton
 	 * @param Closure $initializer A closure
 	 * @return void
 	 */
-	public static function initialize(Closure $initializer)
+	public static function initialize($initializer)
 	{
 		$initializer(parent::instance());
 	}
@@ -125,7 +123,7 @@ class Config extends Singleton
 	public function set_connections($connections, $default_connection=null)
 	{
 		if (!is_array($connections))
-			throw new ConfigException("Connections must be an array");
+			throw new ActiveRecord_ConfigException("Connections must be an array");
 
 		if ($default_connection)
 			$this->set_default_connection($default_connection);
@@ -209,7 +207,7 @@ class Config extends Singleton
 	public function get_model_directory()
 	{
 		if ($this->model_directory && !file_exists($this->model_directory))
-			throw new ConfigException('Invalid or non-existent directory: '.$this->model_directory);
+			throw new ActiveRecord_ConfigException('Invalid or non-existent directory: '.$this->model_directory);
 
 		return $this->model_directory;
 	}
@@ -234,10 +232,10 @@ class Config extends Singleton
 	 */
 	public function set_logger($logger)
 	{
-		$klass = Reflections::instance()->add($logger)->get($logger);
+		$klass = ActiveRecord_Reflections::instance()->add($logger)->get($logger);
 
 		if (!$klass->getMethod('log') || !$klass->getMethod('log')->isPublic())
-			throw new ConfigException("Logger object must implement a public log method");
+			throw new ActiveRecord_ConfigException("Logger object must implement a public log method");
 
 		$this->logger = $logger;
 	}
@@ -267,8 +265,8 @@ class Config extends Singleton
 	 */
 	public function get_date_format()
 	{
-		trigger_error('Use ActiveRecord\Serialization::$DATETIME_FORMAT. Config::get_date_format() has been deprecated.', E_USER_DEPRECATED);
-		return Serialization::$DATETIME_FORMAT;
+		trigger_error('Use ActiveRecord_Serialization::$DATETIME_FORMAT. Config::get_date_format() has been deprecated.', E_USER_DEPRECATED);
+		return ActiveRecord_Serialization::$DATETIME_FORMAT;
 	}
 
 	/**
@@ -276,8 +274,8 @@ class Config extends Singleton
 	 */
 	public function set_date_format($format)
 	{
-		trigger_error('Use ActiveRecord\Serialization::$DATETIME_FORMAT. Config::set_date_format() has been deprecated.', E_USER_DEPRECATED);
-		Serialization::$DATETIME_FORMAT = $format;
+		trigger_error('Use ActiveRecord_Serialization::$DATETIME_FORMAT. Config::set_date_format() has been deprecated.', E_USER_DEPRECATED);
+		ActiveRecord_Serialization::$DATETIME_FORMAT = $format;
 	}
 
 	/**
@@ -298,7 +296,7 @@ class Config extends Singleton
 	 */
 	public function set_cache($url, $options=array())
 	{
-		Cache::initialize($url,$options);
+		ActiveRecord_Cache::initialize($url,$options);
 	}
 };
 ?>

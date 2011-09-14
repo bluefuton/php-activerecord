@@ -2,15 +2,13 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
-use ReflectionClass;
 
 /**
  * Simple class that caches reflections of classes.
  *
  * @package ActiveRecord
  */
-class Reflections extends Singleton
+class ActiveRecord_Reflections extends ActiveRecord_Singleton
 {
 	/**
 	 * Current reflections.
@@ -31,7 +29,7 @@ class Reflections extends Singleton
 
 		if (!isset($this->reflections[$class]))
 			$this->reflections[$class] = new ReflectionClass($class);
-			
+
 		return $this;
 	}
 
@@ -39,7 +37,7 @@ class Reflections extends Singleton
 	 * Destroys the cached ReflectionClass.
 	 *
 	 * Put this here mainly for testing purposes.
-	 * 
+	 *
 	 * @param string $class Name of a class.
 	 * @return void
 	 */
@@ -48,7 +46,7 @@ class Reflections extends Singleton
 		if (isset($this->reflections[$class]))
 			$this->reflections[$class] = null;
 	}
-	
+
 	/**
 	 * Get a cached ReflectionClass.
 	 *

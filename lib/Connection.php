@@ -4,20 +4,14 @@
  * @package ActiveRecord
  */
 
-namespace ActiveRecord;
-
 require 'Column.php';
-
-use PDO;
-use PDOException;
-use Closure;
 
 /**
  * The base class for database connection adapters.
  *
  * @package ActiveRecord
  */
-abstract class Connection
+abstract class ActiveRecord_Connection
 {
 
 	/**
@@ -80,7 +74,7 @@ abstract class Connection
 	 */
 	public static function instance($connection_string_or_connection_name=null)
 	{
-		$config = Config::instance();
+		$config = ActiveRecord_Config::instance();
 
 		if (strpos($connection_string_or_connection_name, '://') === false)
 		{
@@ -92,7 +86,7 @@ abstract class Connection
 			$connection_string = $connection_string_or_connection_name;
 
 		if (!$connection_string)
-			throw new DatabaseException("Empty connection string");
+			throw new ActiveRecord_DatabaseException("Empty connection string");
 
 		$info = static::parse_connection_url($connection_string);
 		$fqclass = static::load_adapter_class($info->protocol);
@@ -106,7 +100,7 @@ abstract class Connection
 			if (isset($info->charset))
 				$connection->set_encoding($info->charset);
 		} catch (PDOException $e) {
-			throw new DatabaseException($e);
+			throw new ActiveRecord_DatabaseException($e);
 		}
 		return $connection;
 	}
@@ -120,11 +114,11 @@ abstract class Connection
 	private static function load_adapter_class($adapter)
 	{
 		$class = ucwords($adapter) . 'Adapter';
-		$fqclass = 'ActiveRecord\\' . $class;
+		$fqclass = 'ActiveRecord_' . $class;
 		$source = __DIR__ . "/adapters/$class.php";
 
 		if (!file_exists($source))
-			throw new DatabaseException("$fqclass not found!");
+			throw new ActiveRecord_DatabaseException("$fqclass not found!");
 
 		require_once($source);
 		return $fqclass;
@@ -157,9 +151,9 @@ abstract class Connection
 		$url = @parse_url($connection_url);
 
 		if (!isset($url['host']))
-			throw new DatabaseException('Database host must be specified in the connection string. If you want to specify an absolute filename, use e.g. sqlite://unix(/path/to/file)');
+			throw new ActiveRecord_DatabaseException('Database host must be specified in the connection string. If you want to specify an absolute filename, use e.g. sqlite://unix(/path/to/file)');
 
-		$info = new \stdClass();
+		$info = new stdClass();
 		$info->protocol = $url['scheme'];
 		$info->host = $url['host'];
 		$info->db = isset($url['path']) ? substr($url['path'], 1) : null;
@@ -238,7 +232,7 @@ abstract class Connection
 
 			$this->connection = new PDO("$info->protocol:$host;dbname=$info->db", $info->user, $info->pass, static::$PDO_OPTIONS);
 		} catch (PDOException $e) {
-			throw new DatabaseException($e);
+			throw new ActiveRecord_DatabaseException($e);
 		}
 	}
 
@@ -298,18 +292,18 @@ abstract class Connection
 
 		try {
 			if (!($sth = $this->connection->prepare($sql)))
-				throw new DatabaseException($this);
+				throw new ActiveRecord_DatabaseException($this);
 		} catch (PDOException $e) {
-			throw new DatabaseException($this);
+			throw new ActiveRecord_DatabaseException($this);
 		}
 
 		$sth->setFetchMode(PDO::FETCH_ASSOC);
 
 		try {
 			if (!$sth->execute($values))
-				throw new DatabaseException($this);
+				throw new ActiveRecord_DatabaseException($this);
 		} catch (PDOException $e) {
-			throw new DatabaseException($sth);
+			throw new ActiveRecord_DatabaseException($sth);
 		}
 		return $sth;
 	}
@@ -334,7 +328,7 @@ abstract class Connection
 	 * @param string $sql Raw SQL string to execute.
 	 * @param Closure $handler Closure that will be passed the fetched results.
 	 */
-	public function query_and_fetch($sql, Closure $handler)
+	public function query_and_fetch($sql, $handler)
 	{
 		$sth = $this->query($sql);
 
@@ -364,7 +358,7 @@ abstract class Connection
 	public function transaction()
 	{
 		if (!$this->connection->beginTransaction())
-			throw new DatabaseException($this);
+			throw new ActiveRecord_DatabaseException($this);
 	}
 
 	/**
@@ -373,7 +367,7 @@ abstract class Connection
 	public function commit()
 	{
 		if (!$this->connection->commit())
-			throw new DatabaseException($this);
+			throw new ActiveRecord_DatabaseException($this);
 	}
 
 	/**
@@ -382,7 +376,7 @@ abstract class Connection
 	public function rollback()
 	{
 		if (!$this->connection->rollback())
-			throw new DatabaseException($this);
+			throw new ActiveRecord_DatabaseException($this);
 	}
 
 	/**
@@ -461,12 +455,12 @@ abstract class Connection
 	public function string_to_datetime($string)
 	{
 		$date = date_create($string);
-		$errors = \DateTime::getLastErrors();
+		$errors = DateTime::getLastErrors();
 
 		if ($errors['warning_count'] > 0 || $errors['error_count'] > 0)
 			return null;
 
-		return new DateTime($date->format('Y-m-d H:i:s T'));
+		return new ActiveRecord_DateTime($date->format('Y-m-d H:i:s T'));
 	}
 
 	/**

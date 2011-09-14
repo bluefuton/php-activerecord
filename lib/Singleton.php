@@ -2,7 +2,6 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
 /**
  * This implementation of the singleton pattern does not conform to the strong definition
@@ -12,7 +11,7 @@ namespace ActiveRecord;
  *
  * @package ActiveRecord
  */
-abstract class Singleton
+abstract class ActiveRecord_Singleton
 {
 	/**
 	 * Array of cached singleton objects.

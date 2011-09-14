@@ -32,21 +32,18 @@
  *   Added rule for potato -> potatoes
  *   Added rule for *us -> *uses
  */
-namespace ActiveRecord;
 
-use \Closure;
-
-function classify($class_name, $singularize=false)
+function ActiveRecord_classify($class_name, $singularize=false)
 {
 	if ($singularize)
-    $class_name = Utils::singularize($class_name);
+    $class_name = ActiveRecord_Utils::singularize($class_name);
 
-	$class_name = Inflector::instance()->camelize($class_name);
+	$class_name = ActiveRecord_Inflector::instance()->camelize($class_name);
 	return ucfirst($class_name);
 }
 
 // http://snippets.dzone.com/posts/show/4660
-function array_flatten(array $array)
+function ActiveRecord_array_flatten(array $array)
 {
 	$i = 0;
 
@@ -63,7 +60,7 @@ function array_flatten(array $array)
 /**
  * Somewhat naive way to determine if an array is a hash.
  */
-function is_hash(&$array)
+function ActiveRecord_is_hash(&$array)
 {
 	if (!is_array($array))
 		return false;
@@ -79,29 +76,29 @@ function is_hash(&$array)
  * @return string stripped class name
  * @access public
  */
-function denamespace($class_name)
+function ActiveRecord_denamespace($class_name)
 {
 	if (is_object($class_name))
 		$class_name = get_class($class_name);
 
 	if (has_namespace($class_name))
 	{
-		$parts = explode('\\', $class_name);
+		$parts = explode('_', $class_name);
 		return end($parts);
 	}
 	return $class_name;
 }
 
-function get_namespaces($class_name)
+function ActiveRecord_get_namespaces($class_name)
 {
 	if (has_namespace($class_name))
-		return explode('\\', $class_name);
+		return explode('_', $class_name);
 	return null;
 }
 
-function has_namespace($class_name)
+function ActiveRecord_has_namespace($class_name)
 {
-	if (strpos($class_name, '\\') !== false)
+	if (strpos($class_name, '_') !== false)
 		return true;
 	return false;
 }
@@ -112,7 +109,7 @@ function has_namespace($class_name)
  * @param $haystack
  * @return unknown_type
  */
-function all($needle, array $haystack)
+function ActiveRecord_all($needle, array $haystack)
 {
 	foreach ($haystack as $value)
 	{
@@ -122,7 +119,7 @@ function all($needle, array $haystack)
 	return true;
 }
 
-function collect(&$enumerable, $name_or_closure)
+function ActiveRecord_collect(&$enumerable, $name_or_closure)
 {
 	$ret = array();
 
@@ -130,7 +127,7 @@ function collect(&$enumerable, $name_or_closure)
 	{
 		if (is_string($name_or_closure))
 			$ret[] = is_array($value) ? $value[$name_or_closure] : $value->$name_or_closure;
-		elseif ($name_or_closure instanceof Closure)
+		elseif (is_callable($name_or_closure))
 			$ret[] = $name_or_closure($value);
 	}
 	return $ret;
@@ -139,11 +136,11 @@ function collect(&$enumerable, $name_or_closure)
 /**
  * Wrap string definitions (if any) into arrays.
  */
-function wrap_strings_in_arrays(&$strings)
+function ActiveRecord_wrap_strings_in_arrays(&$strings)
 {
 	if (!is_array($strings))
 		$strings = array(array($strings));
-	else 
+	else
 	{
 		foreach ($strings as &$str)
 		{
@@ -159,7 +156,7 @@ function wrap_strings_in_arrays(&$strings)
  *
  * @package ActiveRecord
  */
-class Utils
+class ActiveRecord_Utils
 {
 	public static function extract_options($options)
 	{
@@ -186,7 +183,7 @@ class Utils
 
 	public static function human_attribute($attr)
 	{
-		$inflector = Inflector::instance();
+		$inflector = ActiveRecord_Inflector::instance();
 		$inflected = $inflector->variablize($attr);
 		$normal = $inflector->uncamelize($inflected);
 

@@ -2,14 +2,13 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
 /**
  * Singleton to manage any and all database connections.
  *
  * @package ActiveRecord
  */
-class ConnectionManager extends Singleton
+class ActiveRecord_ConnectionManager extends ActiveRecord_Singleton
 {
 	/**
 	 * Array of {@link Connection} objects.
@@ -30,7 +29,7 @@ class ConnectionManager extends Singleton
         $name = $name ? $name : $config->get_default_connection();
 
 		if (!isset(self::$connections[$name]) || !self::$connections[$name]->connection)
-            self::$connections[$name] = Connection::instance($config->get_connection($name));
+            self::$connections[$name] = ActiveRecord_Connection::instance($config->get_connection($name));
 
 		return self::$connections[$name];
 	}

@@ -2,12 +2,11 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
 /**
  * @package ActiveRecord
  */
-abstract class Inflector
+abstract class ActiveRecord_Inflector
 {
 	/**
 	 * Get an instance of the {@link Inflector} class.
@@ -16,7 +15,7 @@ abstract class Inflector
 	 */
 	public static function instance()
 	{
-		return new StandardInflector();
+		return new ActiveRecord_StandardInflector();
 	}
 
 	/**
@@ -112,9 +111,9 @@ abstract class Inflector
 /**
  * @package ActiveRecord
  */
-class StandardInflector extends Inflector
+class ActiveRecord_StandardInflector extends ActiveRecord_Inflector
 {
-	public function tableize($s) { return Utils::pluralize(strtolower($this->underscorify($s))); }
+	public function tableize($s) { return ActiveRecord_Utils::pluralize(strtolower($this->underscorify($s))); }
 	public function variablize($s) { return str_replace(array('-',' '),array('_','_'),strtolower(trim($s))); }
 }
 ?>

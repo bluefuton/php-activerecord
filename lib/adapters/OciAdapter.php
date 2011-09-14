@@ -2,16 +2,14 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
-use PDO;
 
 /**
  * Adapter for OCI (not completed yet).
- * 
+ *
  * @package ActiveRecord
  */
-class OciAdapter extends Connection
+class ActiveRecord_OciAdapter extends ActiveRecord_Connection
 {
 	static $QUOTE_CHARACTER = '';
 	static $DEFAULT_PORT = 1521;
@@ -24,12 +22,12 @@ class OciAdapter extends Connection
 			$this->dsn_params = isset($info->charset) ? ";charset=$info->charset" : "";
 			$this->connection = new PDO("oci:dbname=//$info->host/$info->db$this->dsn_params",$info->user,$info->pass,static::$PDO_OPTIONS);
 		} catch (PDOException $e) {
-			throw new DatabaseException($e);
+			throw new ActiveRecord_DatabaseException($e);
 		}
 	}
 
 	public function supports_sequences() { return true; }
-	
+
 	public function get_next_sequence_value($sequence_name)
 	{
 		return $this->query_and_fetch_one('SELECT ' . $this->next_sequence_value($sequence_name) . ' FROM dual');
@@ -60,14 +58,14 @@ class OciAdapter extends Connection
 	{
 		$offset = intval($offset);
 		$stop = $offset + intval($limit);
-		return 
+		return
 			"SELECT * FROM (SELECT a.*, rownum ar_rnum__ FROM ($sql) a " .
 			"WHERE rownum <= $stop) WHERE ar_rnum__ > $offset";
 	}
 
 	public function query_column_info($table)
 	{
-		$sql = 
+		$sql =
 			"SELECT c.column_name, c.data_type, c.data_length, c.data_scale, c.data_default, c.nullable, " .
 				"(SELECT a.constraint_type " .
 				"FROM all_constraints a, all_cons_columns b " .
@@ -103,13 +101,13 @@ class OciAdapter extends Connection
 				$column['data_type'] = 'int';
 		}
 
-		$c = new Column();
-		$c->inflected_name	= Inflector::instance()->variablize($column['column_name']);
+		$c = new ActiveRecord_Column();
+		$c->inflected_name	= ActiveRecord_Inflector::instance()->variablize($column['column_name']);
 		$c->name			= $column['column_name'];
 		$c->nullable		= $column['nullable'] == 'Y' ? true : false;
 		$c->pk				= $column['pk'] == 'P' ? true : false;
 		$c->length			= $column['data_length'];
-	
+
 		if ($column['data_type'] == 'timestamp')
 			$c->raw_type = 'datetime';
 		else

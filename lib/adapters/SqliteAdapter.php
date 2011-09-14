@@ -2,21 +2,19 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
-use PDO;
 
 /**
  * Adapter for SQLite.
  *
  * @package ActiveRecord
  */
-class SqliteAdapter extends Connection
+class ActiveRecord_SqliteAdapter extends ActiveRecord_Connection
 {
 	protected function __construct($info)
 	{
 		if (!file_exists($info->host))
-			throw new DatabaseException("Could not find sqlite db: $info->host");
+			throw new ActiveRecord_DatabaseException("Could not find sqlite db: $info->host");
 
 		$this->connection = new PDO("sqlite:$info->host",null,null,static::$PDO_OPTIONS);
 	}
@@ -40,8 +38,8 @@ class SqliteAdapter extends Connection
 
 	public function create_column($column)
 	{
-		$c = new Column();
-		$c->inflected_name	= Inflector::instance()->variablize($column['name']);
+		$c = new ActiveRecord_Column();
+		$c->inflected_name	= ActiveRecord_Inflector::instance()->variablize($column['name']);
 		$c->name			= $column['name'];
 		$c->nullable		= $column['notnull'] ? false : true;
 		$c->pk				= $column['pk'] ? true : false;
@@ -49,7 +47,7 @@ class SqliteAdapter extends Connection
 
 		$column['type'] = preg_replace('/ +/',' ',$column['type']);
 		$column['type'] = str_replace(array('(',')'),' ',$column['type']);
-		$column['type'] = Utils::squeeze(' ',$column['type']);
+		$column['type'] = ActiveRecord_Utils::squeeze(' ',$column['type']);
 		$matches = explode(' ',$column['type']);
 
 		if (!empty($matches))
@@ -62,15 +60,15 @@ class SqliteAdapter extends Connection
 
 		$c->map_raw_type();
 
-		if ($c->type == Column::DATETIME)
+		if ($c->type == ActiveRecord_Column::DATETIME)
 			$c->length = 19;
-		elseif ($c->type == Column::DATE)
+		elseif ($c->type == ActiveRecord_Column::DATE)
 			$c->length = 10;
 
 		// From SQLite3 docs: The value is a signed integer, stored in 1, 2, 3, 4, 6,
 		// or 8 bytes depending on the magnitude of the value.
 		// so is it ok to assume it's possible an int can always go up to 8 bytes?
-		if ($c->type == Column::INTEGER && !$c->length)
+		if ($c->type == ActiveRecord_Column::INTEGER && !$c->length)
 			$c->length = 8;
 
 		$c->default = $c->cast($column['dflt_value'],$this);

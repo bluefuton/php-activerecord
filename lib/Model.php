@@ -2,7 +2,6 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
 /**
  * The base class for your models.
@@ -71,7 +70,7 @@ namespace ActiveRecord;
  * @see Serialization
  * @see Validations
  */
-class Model
+class ActiveRecord_Model
 {
 	/**
 	 * An instance of {@link Errors} and will be instantiated once a write method is called.
@@ -417,7 +416,7 @@ class Model
 				return $this->$item['to']->$delegated_name = $value;
 		}
 
-		throw new UndefinedPropertyException(get_called_class(),$name);
+		throw new ActiveRecord_UndefinedPropertyException(get_called_class(),$name);
 	}
 
 	public function __wakeup()
@@ -441,12 +440,12 @@ class Model
 			$value = $table->columns[$name]->cast($value,static::connection());
 
 		// convert php's \DateTime to ours
-		if ($value instanceof \DateTime)
-			$value = new DateTime($value->format('Y-m-d H:i:s T'));
+		if ($value instanceof DateTime)
+			$value = new ActiveRecord_DateTime($value->format('Y-m-d H:i:s T'));
 
 		// make sure DateTime values know what model they belong to so
 		// dirty stuff works when calling set methods on the DateTime object
-		if ($value instanceof DateTime)
+		if ($value instanceof ActiveRecord_DateTime)
 			$value->attribute_of($this,$name);
 
 		$this->attributes[$name] = $value;
@@ -511,7 +510,7 @@ class Model
 			}
 		}
 
-		throw new UndefinedPropertyException(get_called_class(),$name);
+		throw new ActiveRecord_UndefinedPropertyException(get_called_class(),$name);
 	}
 
 	/**
@@ -612,7 +611,7 @@ class Model
 	{
 		require_once 'Validations.php';
 
-		$validator = new Validations($this);
+		$validator = new ActiveRecord_Validations($this);
 		return $validator->rules();
 	}
 
@@ -692,7 +691,7 @@ class Model
 	private function verify_not_readonly($method_name)
 	{
 		if ($this->is_readonly())
-			throw new ReadOnlyException(get_class($this), $method_name);
+			throw new ActiveRecord_ReadOnlyException(get_class($this), $method_name);
 	}
 
 	/**
@@ -794,7 +793,7 @@ class Model
 
 		if ($table->sequence && !isset($attributes[$pk]))
 		{
-			if (($conn = static::connection()) instanceof OciAdapter)
+			if (($conn = static::connection()) instanceof ActiveRecord_OciAdapter)
 			{
 				// terrible oracle makes us select the nextval first
 				$attributes[$pk] = $conn->get_next_sequence_value($table->sequence);
@@ -899,7 +898,7 @@ class Model
 	{
 		$table = static::table();
 		$conn = static::connection();
-		$sql = new SQLBuilder($conn, $table->get_fully_qualified_table_name());
+		$sql = new ActiveRecord_SQLBuilder($conn, $table->get_fully_qualified_table_name());
 
 		$conditions = is_array($options) ? $options['conditions'] : $options;
 
@@ -952,7 +951,7 @@ class Model
 	{
 		$table = static::table();
 		$conn = static::connection();
-		$sql = new SQLBuilder($conn, $table->get_fully_qualified_table_name());
+		$sql = new ActiveRecord_SQLBuilder($conn, $table->get_fully_qualified_table_name());
 
 		$sql->update($options['set']);
 
@@ -1034,7 +1033,7 @@ class Model
 	{
 		require_once 'Validations.php';
 
-		$validator = new Validations($this);
+		$validator = new ActiveRecord_Validations($this);
 		$validation_on = 'validation_on_' . ($this->is_new_record() ? 'create' : 'update');
 
 		foreach (array('before_validation', "before_$validation_on") as $callback)
@@ -1177,7 +1176,7 @@ class Model
 				// set valid table data
 				try {
 					$this->$name = $value;
-				} catch (UndefinedPropertyException $e) {
+				} catch (ActiveRecord_UndefinedPropertyException $e) {
 					$exceptions[] = $e->getMessage();
 				}
 			}
@@ -1193,7 +1192,7 @@ class Model
 		}
 
 		if (!empty($exceptions))
-			throw new UndefinedPropertyException(get_called_class(),$exceptions);
+			throw new ActiveRecord_UndefinedPropertyException(get_called_class(),$exceptions);
 	}
 
 	/**
@@ -1222,7 +1221,7 @@ class Model
 				return $this->__relationships[$name] = $model;
 		}
 
-		throw new RelationshipException("Relationship named $name has not been declared for class: {$table->class->getName()}");
+		throw new ActiveRecord_RelationshipException("Relationship named $name has not been declared for class: {$table->class->getName()}");
 	}
 
 	/**
@@ -1324,21 +1323,21 @@ class Model
 		if (substr($method,0,7) === 'find_by')
 		{
 			$attributes = substr($method,8);
-			$options['conditions'] = SQLBuilder::create_conditions_from_underscored_string(static::connection(),$attributes,$args,static::$alias_attribute);
+			$options['conditions'] = ActiveRecord_SQLBuilder::create_conditions_from_underscored_string(static::connection(),$attributes,$args,static::$alias_attribute);
 
 			if (!($ret = static::find('first',$options)) && $create)
-				return static::create(SQLBuilder::create_hash_from_underscored_string($attributes,$args,static::$alias_attribute));
+				return static::create(ActiveRecord_SQLBuilder::create_hash_from_underscored_string($attributes,$args,static::$alias_attribute));
 
 			return $ret;
 		}
 		elseif (substr($method,0,11) === 'find_all_by')
 		{
-			$options['conditions'] = SQLBuilder::create_conditions_from_underscored_string(static::connection(),substr($method,12),$args,static::$alias_attribute);
+			$options['conditions'] = ActiveRecord_SQLBuilder::create_conditions_from_underscored_string(static::connection(),substr($method,12),$args,static::$alias_attribute);
 			return static::find('all',$options);
 		}
 		elseif (substr($method,0,8) === 'count_by')
 		{
-			$options['conditions'] = SQLBuilder::create_conditions_from_underscored_string(static::connection(),substr($method,9),$args,static::$alias_attribute);
+			$options['conditions'] = ActiveRecord_SQLBuilder::create_conditions_from_underscored_string(static::connection(),substr($method,9),$args,static::$alias_attribute);
 			return static::count($options);
 		}
 
@@ -1516,7 +1515,7 @@ class Model
 		$class = get_called_class();
 
 		if (func_num_args() <= 0)
-			throw new RecordNotFound("Couldn't find $class without an ID");
+			throw new ActiveRecord_RecordNotFound("Couldn't find $class without an ID");
 
 		$args = func_get_args();
 		$options = static::extract_and_validate_options($args);
@@ -1535,7 +1534,7 @@ class Model
 					if (!array_key_exists('order',$options))
 						$options['order'] = join(' DESC, ',static::table()->pk) . ' DESC';
 					else
-						$options['order'] = SQLBuilder::reverse_order($options['order']);
+						$options['order'] = ActiveRecord_SQLBuilder::reverse_order($options['order']);
 
 					// fall thru
 
@@ -1586,11 +1585,11 @@ class Model
 				if (!is_array($values))
 					$values = array($values);
 
-				throw new RecordNotFound("Couldn't find $class with ID=" . join(',',$values));
+				throw new ActiveRecord_RecordNotFound("Couldn't find $class with ID=" . join(',',$values));
 			}
 
 			$values = join(',',$values);
-			throw new RecordNotFound("Couldn't find all $class with IDs ($values) (found $results, but was looking for $expected)");
+			throw new ActiveRecord_RecordNotFound("Couldn't find all $class with IDs ($values) (found $results, but was looking for $expected)");
 		}
 		return $expected == 1 ? $list[0] : $list;
 	}
@@ -1779,7 +1778,7 @@ class Model
 	private function serialize($type, $options)
 	{
 		require_once 'Serialization.php';
-		$class = "ActiveRecord\\{$type}Serializer";
+		$class = "ActiveRecord_{$type}Serializer";
 		$serializer = new $class($this, $options);
 		return $serializer->to_s();
 	}
@@ -1843,7 +1842,7 @@ class Model
 			else
 				$connection->commit();
 		}
-		catch (\Exception $e)
+		catch (Exception $e)
 		{
 			$connection->rollback();
 			throw $e;

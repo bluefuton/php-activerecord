@@ -2,7 +2,6 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
 /**
  * Manages reading and writing to a database table.
@@ -13,7 +12,7 @@ namespace ActiveRecord;
  *
  * @package ActiveRecord
  */
-class Table
+class ActiveRecord_Table
 {
 	private static $cache = array();
 
@@ -58,7 +57,7 @@ class Table
 		{
 			/* do not place set_assoc in constructor..it will lead to infinite loop due to
 			   relationships requesting the model's table, but the cache hasn't been set yet */
-			self::$cache[$model_class_name] = new Table($model_class_name);
+			self::$cache[$model_class_name] = new ActiveRecord_Table($model_class_name);
 			self::$cache[$model_class_name]->set_associations();
 		}
 
@@ -97,10 +96,10 @@ class Table
 
 		if ($close)
 		{
-			ConnectionManager::drop_connection($connection);
+			ActiveRecord_ConnectionManager::drop_connection($connection);
 			static::clear_cache();
 		}
-		return ($this->conn = ConnectionManager::get_connection($connection));
+		return ($this->conn = ActiveRecord_ConnectionManager::get_connection($connection));
 	}
 
 	public function create_joins($joins)
@@ -137,7 +136,7 @@ class Table
 					$ret .= $rel->construct_inner_join_sql($this, false, $alias);
 				}
 				else
-					throw new RelationshipException("Relationship named $value has not been declared for class: {$this->class->getName()}");
+					throw new ActiveRecord_RelationshipException("Relationship named $value has not been declared for class: {$this->class->getName()}");
 			}
 			else
 				$ret .= $value;
@@ -150,7 +149,7 @@ class Table
 	public function options_to_sql($options)
 	{
 		$table = array_key_exists('from', $options) ? $options['from'] : $this->get_fully_qualified_table_name();
-		$sql = new SQLBuilder($this->conn, $table);
+		$sql = new ActiveRecord_SQLBuilder($this->conn, $table);
 
 		if (array_key_exists('joins',$options))
 		{
@@ -300,7 +299,7 @@ class Table
 			return $this->relationships[$name];
 
 		if ($strict)
-			throw new RelationshipException("Relationship named $name has not been declared for class: {$this->class->getName()}");
+			throw new ActiveRecord_RelationshipException("Relationship named $name has not been declared for class: {$this->class->getName()}");
 
 		return null;
 	}
@@ -320,7 +319,7 @@ class Table
 	{
 		$data = $this->process_data($data);
 
-		$sql = new SQLBuilder($this->conn,$this->get_fully_qualified_table_name());
+		$sql = new ActiveRecord_SQLBuilder($this->conn,$this->get_fully_qualified_table_name());
 		$sql->insert($data,$pk,$sequence_name);
 
 		$values = array_values($data);
@@ -331,7 +330,7 @@ class Table
 	{
 		$data = $this->process_data($data);
 
-		$sql = new SQLBuilder($this->conn,$this->get_fully_qualified_table_name());
+		$sql = new ActiveRecord_SQLBuilder($this->conn,$this->get_fully_qualified_table_name());
 		$sql->update($data)->where($where);
 
 		$values = $sql->bind_values();
@@ -342,7 +341,7 @@ class Table
 	{
 		$data = $this->process_data($data);
 
-		$sql = new SQLBuilder($this->conn,$this->get_fully_qualified_table_name());
+		$sql = new ActiveRecord_SQLBuilder($this->conn,$this->get_fully_qualified_table_name());
 		$sql->delete($data);
 
 		$values = $sql->bind_values();
@@ -363,7 +362,7 @@ class Table
 	{
 		// as more adapters are added probably want to do this a better way
 		// than using instanceof but gud enuff for now
-		$quote_name = !($this->conn instanceof PgsqlAdapter);
+		$quote_name = !($this->conn instanceof ActiveRecord_PgsqlAdapter);
 
 		$table_name = $this->get_fully_qualified_table_name($quote_name);
 		$conn = $this->conn;
@@ -398,9 +397,9 @@ class Table
 
 		foreach ($hash as $name => &$value)
 		{
-			if ($value instanceof \DateTime)
+			if ($value instanceof DateTime)
 			{
-				if (isset($this->columns[$name]) && $this->columns[$name]->type == Column::DATE)
+				if (isset($this->columns[$name]) && $this->columns[$name]->type == ActiveRecord_Column::DATE)
 					$hash[$name] = $this->conn->date_to_string($value);
 				else
 					$hash[$name] = $this->conn->datetime_to_string($value);
@@ -434,10 +433,10 @@ class Table
 		else
 		{
 			// infer table name from the class name
-			$this->table = Inflector::instance()->tableize($this->class->getName());
+			$this->table = ActiveRecord_Inflector::instance()->tableize($this->class->getName());
 
 			// strip namespaces from the table name if any
-			$parts = explode('\\',$this->table);
+			$parts = explode('_',$this->table);
 			$this->table = $parts[count($parts)-1];
 		}
 
@@ -470,19 +469,19 @@ class Table
 				switch ($name)
 				{
 					case 'has_many':
-						$relationship = new HasMany($definition);
+						$relationship = new ActiveRecord_HasMany($definition);
 						break;
 
 					case 'has_one':
-						$relationship = new HasOne($definition);
+						$relationship = new ActiveRecord_HasOne($definition);
 						break;
 
 					case 'belongs_to':
-						$relationship = new BelongsTo($definition);
+						$relationship = new ActiveRecord_BelongsTo($definition);
 						break;
 
 					case 'has_and_belongs_to_many':
-						$relationship = new HasAndBelongsToMany($definition);
+						$relationship = new ActiveRecord_HasAndBelongsToMany($definition);
 						break;
 				}
 

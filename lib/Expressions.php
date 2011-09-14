@@ -2,7 +2,6 @@
 /**
  * @package ActiveRecord
  */
-namespace ActiveRecord;
 
 /**
  * Templating like class for building SQL statements.
@@ -11,10 +10,10 @@ namespace ActiveRecord;
  * 'name = :name AND author = :author'
  * 'id = IN(:ids)'
  * 'id IN(:subselect)'
- * 
+ *
  * @package ActiveRecord
  */
-class Expressions
+class ActiveRecord_Expressions
 {
 	const ParameterMarker = '?';
 
@@ -50,7 +49,7 @@ class Expressions
 	public function bind($parameter_number, $value)
 	{
 		if ($parameter_number <= 0)
-			throw new ExpressionsException("Invalid parameter index: $parameter_number");
+			throw new ActiveRecord_ExpressionsException("Invalid parameter index: $parameter_number");
 
 		$this->values[$parameter_number-1] = $value;
 	}
@@ -90,7 +89,7 @@ class Expressions
 	public function to_s($substitute=false, &$options=null)
 	{
 		if (!$options) $options = array();
-		
+
 		$values = array_key_exists('values',$options) ? $options['values'] : $this->values;
 
 		$ret = "";
@@ -108,7 +107,7 @@ class Expressions
 				if ($quotes % 2 == 0)
 				{
 					if ($j > $num_values-1)
-						throw new ExpressionsException("No bound parameter for index $j");
+						throw new ActiveRecord_ExpressionsException("No bound parameter for index $j");
 
 					$ch = $this->substitute($values,$substitute,$i,$j++);
 				}
