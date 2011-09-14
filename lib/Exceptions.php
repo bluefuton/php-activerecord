@@ -71,7 +71,7 @@ class ActiveRecord_ConfigException extends ActiveRecordException {};
  *
  * @package ActiveRecord
  */
-class ActiveRecord_UndefinedPropertyException extends ModelException
+class ActiveRecord_UndefinedPropertyException extends ActiveRecord_ModelException
 {
 	/**
 	 * Sets the exception message to show the undefined property's name.

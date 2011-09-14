@@ -109,7 +109,7 @@ class ActiveRecord_CallBack
 	{
 		$this->klass = ActiveRecord_Reflections::instance()->get($model_class_name);
 
-		foreach (static::$VALID_CALLBACKS as $name)
+		foreach (self::$VALID_CALLBACKS as $name)
 		{
 			// look for explicitly defined static callback
 			if (($definition = $this->klass->getStaticPropertyValue($name,null)))
@@ -216,22 +216,25 @@ class ActiveRecord_CallBack
 		if (!in_array($name,self::$VALID_CALLBACKS))
 			throw new ActiveRecordException("Invalid callback: $name");
 
-		if (!isset($this->publicMethods))
-			$this->publicMethods = get_class_methods($this->klass->getName());
-
-		if (!in_array($closure_or_method_name, $this->publicMethods))
+		if (preg_match("#lambda_\d+$#", $closure_or_method_name) === 0)
 		{
-			if ($this->klass->hasMethod($closure_or_method_name))
+			if (!isset($this->publicMethods))
+				$this->publicMethods = get_class_methods($this->klass->getName());
+
+			if (!in_array($closure_or_method_name, $this->publicMethods))
 			{
-				// Method is private or protected
-				throw new ActiveRecordException("Callback methods need to be public (or anonymous closures). " .
-					"Please change the visibility of " . $this->klass->getName() . "->" . $closure_or_method_name . "()");
-			}
-			else
-			{
-				// i'm a dirty ruby programmer
-				throw new ActiveRecordException("Unknown method for callback: $name" .
-					(is_string($closure_or_method_name) ? ": #$closure_or_method_name" : ""));
+				if ($this->klass->hasMethod($closure_or_method_name))
+				{
+					// Method is private or protected
+					throw new ActiveRecordException("Callback methods need to be public (or anonymous closures). " .
+						"Please change the visibility of " . $this->klass->getName() . "->" . $closure_or_method_name . "()");
+				}
+				else
+				{
+					// i'm a dirty ruby programmer
+					throw new ActiveRecordException("Unknown method for callback: $name" .
+						(is_string($closure_or_method_name) ? ": #$closure_or_method_name" : ""));
+				}
 			}
 		}
 

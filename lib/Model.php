@@ -253,7 +253,8 @@ class ActiveRecord_Model
 		// initialize attributes applying defaults
 		if (!$instantiating_via_find)
 		{
-			foreach (static::table()->columns as $name => $meta)
+			$table = call_user_func(array(get_called_class(), 'table'));
+			foreach ($table()->columns as $name => $meta)
 				$this->attributes[$meta->inflected_name] = $meta->default;
 		}
 
@@ -340,7 +341,8 @@ class ActiveRecord_Model
 	 */
 	public function __isset($attribute_name)
 	{
-		return array_key_exists($attribute_name,$this->attributes) || array_key_exists($attribute_name,static::$alias_attribute);
+		$static_attribute_name = eval('return ' . get_called_class() . '::$alias_attribute;');
+		return array_key_exists($attribute_name,$this->attributes) || array_key_exists($attribute_name,$static_attribute_name);
 	}
 
 	/**
@@ -395,8 +397,9 @@ class ActiveRecord_Model
 	 */
 	public function __set($name, $value)
 	{
-		if (array_key_exists($name, static::$alias_attribute))
-			$name = static::$alias_attribute[$name];
+		$static_attribute_name = eval('return ' . get_called_class() . '::$alias_attribute;');
+		if (array_key_exists($name, $static_attribute_name))
+			$name = $static_attribute_name[$name];
 
 		elseif (method_exists($this,"set_$name"))
 		{
@@ -410,7 +413,8 @@ class ActiveRecord_Model
 		if ($name == 'id')
 			return $this->assign_attribute($this->get_primary_key(true),$value);
 
-		foreach (static::$delegate as &$item)
+		$static_delegate = eval('return ' . get_called_class() . '::$delegate');
+		foreach ($static_delegate as &$item)
 		{
 			if (($delegated_name = $this->is_delegated($name,$item)))
 				return $this->$item['to']->$delegated_name = $value;
@@ -422,7 +426,7 @@ class ActiveRecord_Model
 	public function __wakeup()
 	{
 		// make sure the models Table instance gets initialized when waking up
-		static::table();
+		call_user_func(array(get_called_class(), 'table'));
 	}
 
 	/**
@@ -434,10 +438,12 @@ class ActiveRecord_Model
 	 */
 	public function assign_attribute($name, $value)
 	{
-		$table = static::table();
+		$table = call_user_func(array(get_called_class(), 'table'));
 
-		if (array_key_exists($name,$table->columns) && !is_object($value))
-			$value = $table->columns[$name]->cast($value,static::connection());
+		if (array_key_exists($name,$table->columns) && !is_object($value)) {
+			$static_connection = call_user_func(array(get_called_class(), 'connection'));
+			$value = $table->columns[$name]->cast($value,$static_connection);
+		}
 
 		// convert php's \DateTime to ours
 		if ($value instanceof DateTime)
@@ -465,8 +471,9 @@ class ActiveRecord_Model
 	public function &read_attribute($name)
 	{
 		// check for aliased attribute
-		if (array_key_exists($name, static::$alias_attribute))
-			$name = static::$alias_attribute[$name];
+		$static_attribute_name = eval('return ' . get_called_class() . '::$alias_attribute;');
+		if (array_key_exists($name, $static_attribute_name))
+			$name = $static_attribute_name[$name];
 
 		// check for attribute
 		if (array_key_exists($name,$this->attributes))
@@ -476,7 +483,7 @@ class ActiveRecord_Model
 		if (array_key_exists($name,$this->__relationships))
 			return $this->__relationships[$name];
 
-		$table = static::table();
+		$table = call_user_func(array(get_called_class(), 'table'));
 
 		// this may be first access to the relationship so check Table
 		if (($relationship = $table->get_relationship($name)))
@@ -495,7 +502,8 @@ class ActiveRecord_Model
 		//do not remove - have to return null by reference in strict mode
 		$null = null;
 
-		foreach (static::$delegate as &$item)
+		$static_delegate = eval('return ' . get_called_class() . '::$delegate');
+		foreach ($static_delegate as &$item)
 		{
 			if (($delegated_name = $this->is_delegated($name,$item)))
 			{
@@ -568,7 +576,8 @@ class ActiveRecord_Model
 	 */
 	public function get_primary_key($first=false)
 	{
-		$pk = static::table()->pk;
+		$static_table = call_user_func(array(get_called_class(), 'table'));
+		$pk = $static_table->pk;
 		return $first ? $pk[0] : $pk;
 	}
 
@@ -583,8 +592,9 @@ class ActiveRecord_Model
 		if (array_key_exists($name,$this->attributes))
 			return $name;
 
-		if (array_key_exists($name,static::$alias_attribute))
-			return static::$alias_attribute[$name];
+		$static_attribute_name = eval('return ' . get_called_class() . '::$alias_attribute;');
+		if (array_key_exists($name,$static_attribute_name))
+			return $static_attribute_name[$name];
 
 		return null;
 	}
@@ -640,7 +650,8 @@ class ActiveRecord_Model
 	 */
 	public static function table_name()
 	{
-		return static::table()->table;
+		$static_table = call_user_func(array(get_called_class(), 'table'));
+		return $static_table->table;
 	}
 
 	/**
@@ -711,7 +722,8 @@ class ActiveRecord_Model
 	 */
 	public static function connection()
 	{
-		return static::table()->conn;
+		$static_table = call_user_func(array(get_called_class(), 'table'));
+		return $static_table->conn;
 	}
 
 	/**
@@ -721,7 +733,8 @@ class ActiveRecord_Model
 	 */
 	public static function reestablish_connection()
 	{
-		return static::table()->reestablish_connection();
+		$static_table = call_user_func(array(get_called_class(), 'table'));
+		return $static_table->reestablish_connection();
 	}
 
 	/**
@@ -783,7 +796,7 @@ class ActiveRecord_Model
 		if (($validate && !$this->_validate() || !$this->invoke_callback('before_create',false)))
 			return false;
 
-		$table = static::table();
+		$table = call_user_func(array(get_called_class(), 'table'));
 
 		if (!($attributes = $this->dirty_attributes()))
 			$attributes = $this->attributes;
@@ -793,7 +806,7 @@ class ActiveRecord_Model
 
 		if ($table->sequence && !isset($attributes[$pk]))
 		{
-			if (($conn = static::connection()) instanceof ActiveRecord_OciAdapter)
+			if (($conn = call_user_func(array(get_called_class(), 'connection'))) instanceof ActiveRecord_OciAdapter)
 			{
 				// terrible oracle makes us select the nextval first
 				$attributes[$pk] = $conn->get_next_sequence_value($table->sequence);
@@ -819,8 +832,10 @@ class ActiveRecord_Model
 		{
 			$column = $table->get_column_by_inflected_name($pk);
 
-			if ($column->auto_increment || $use_sequence)
-				$this->attributes[$pk] = static::connection()->insert_id($table->sequence);
+			if ($column->auto_increment || $use_sequence) {
+				$static_connection = call_user_func(array(get_called_class(), 'connection'));
+				$this->attributes[$pk] = $static_connection->insert_id($table->sequence);
+			}
 		}
 
 		$this->invoke_callback('after_create',false);
@@ -853,7 +868,8 @@ class ActiveRecord_Model
 				return false;
 
 			$dirty = $this->dirty_attributes();
-			static::table()->update($dirty,$pk);
+			$static_table = call_user_func(array(get_called_class(), 'table'));
+			$static_table->update($dirty,$pk);
 			$this->invoke_callback('after_update',false);
 		}
 
@@ -896,13 +912,13 @@ class ActiveRecord_Model
 	 */
 	public static function delete_all($options=array())
 	{
-		$table = static::table();
-		$conn = static::connection();
+		$table = call_user_func(array(get_called_class(), 'table'));
+		$conn = call_user_func(array(get_called_class(), 'connection'));
 		$sql = new ActiveRecord_SQLBuilder($conn, $table->get_fully_qualified_table_name());
 
 		$conditions = is_array($options) ? $options['conditions'] : $options;
 
-		if (is_array($conditions) && !is_hash($conditions))
+		if (is_array($conditions) && !ActiveRecord_is_hash($conditions))
 			call_user_func_array(array($sql, 'delete'), $conditions);
 		else
 			$sql->delete($conditions);
@@ -949,15 +965,15 @@ class ActiveRecord_Model
 	 */
 	public static function update_all($options=array())
 	{
-		$table = static::table();
-		$conn = static::connection();
+		$table = call_user_func(array(get_called_class(), 'table'));
+		$conn = call_user_func(array(get_called_class(), 'connection'));
 		$sql = new ActiveRecord_SQLBuilder($conn, $table->get_fully_qualified_table_name());
 
 		$sql->update($options['set']);
 
 		if (isset($options['conditions']) && ($conditions = $options['conditions']))
 		{
-			if (is_array($conditions) && !is_hash($conditions))
+			if (is_array($conditions) && !ActiveRecord_is_hash($conditions))
 				call_user_func_array(array($sql, 'where'), $conditions);
 			else
 				$sql->where($conditions);
@@ -992,7 +1008,8 @@ class ActiveRecord_Model
 		if (!$this->invoke_callback('before_destroy',false))
 			return false;
 
-		static::table()->delete($pk);
+		$static_table = call_user_func(array(get_called_class(), 'table'));
+		$static_table->delete($pk);
 		$this->invoke_callback('after_destroy',false);
 
 		return true;
@@ -1005,7 +1022,8 @@ class ActiveRecord_Model
 	 */
 	public function values_for_pk()
 	{
-		return $this->values_for(static::table()->pk);
+		$static_table = call_user_func(array(get_called_class(), 'table'));
+		return $this->values_for($static_table->pk);
 	}
 
 	/**
@@ -1150,11 +1168,13 @@ class ActiveRecord_Model
 	private function set_attributes_via_mass_assignment(array &$attributes, $guard_attributes)
 	{
 		//access uninflected columns since that is what we would have in result set
-		$table = static::table();
+		$table = call_user_func(array(get_called_class(), 'table'));
 		$exceptions = array();
-		$use_attr_accessible = !empty(static::$attr_accessible);
-		$use_attr_protected = !empty(static::$attr_protected);
-		$connection = static::connection();
+		$static_attr_accessible = eval('return ' . get_called_class() . '::$attr_accessible;');
+		$static_attr_protected = eval('return ' . get_called_class() . '::$attr_protected;');
+		$use_attr_accessible = !empty($static_attr_accessible);
+		$use_attr_protected = !empty($static_attr_protected);
+		$connection = call_user_func(array(get_called_class(), 'connection'));
 
 		foreach ($attributes as $name => $value)
 		{
@@ -1167,10 +1187,10 @@ class ActiveRecord_Model
 
 			if ($guard_attributes)
 			{
-				if ($use_attr_accessible && !in_array($name,static::$attr_accessible))
+				if ($use_attr_accessible && !in_array($name,$static_attr_accessible))
 					continue;
 
-				if ($use_attr_protected && in_array($name,static::$attr_protected))
+				if ($use_attr_protected && in_array($name,$static_attr_protected))
 					continue;
 
 				// set valid table data
@@ -1205,7 +1225,7 @@ class ActiveRecord_Model
 	 */
 	public function set_relationship_from_eager_load(Model $model=null, $name)
 	{
-		$table = static::table();
+		$table = call_user_func(array(get_called_class(), 'table'));
 
 		if (($rel = $table->get_relationship($name)))
 		{
@@ -1303,6 +1323,7 @@ class ActiveRecord_Model
 	 * @throws {@link ActiveRecordException} if invalid query
 	 * @see find
 	 */
+	/*
 	public static function __callStatic($method, $args)
 	{
 		$options = static::extract_and_validate_options($args);
@@ -1343,6 +1364,7 @@ class ActiveRecord_Model
 
 		throw new ActiveRecordException("Call to undefined method: $method");
 	}
+	*/
 
 	/**
 	 * Enables the use of build|create for associations.
@@ -1361,7 +1383,7 @@ class ActiveRecord_Model
 
 			$association_name = str_replace(array('build_', 'create_'), '', $method);
 			$method = str_replace($association_name, 'association', $method);
-			$table = static::table();
+			$table = call_user_func(array(get_called_class(), 'table'));
 
 			if (($association = $table->get_relationship($association_name)) ||
 				  ($association = $table->get_relationship(($association_name = Utils::pluralize($association_name)))))
@@ -1384,7 +1406,8 @@ class ActiveRecord_Model
 	 */
 	public static function all(/* ... */)
 	{
-		return call_user_func_array('static::find',array_merge(array('all'),func_get_args()));
+		$args = func_get_args();
+		return call_user_func_array(get_called_class() . '::find',array_merge(array('all'),$args));
 	}
 
 	/**
@@ -1400,21 +1423,22 @@ class ActiveRecord_Model
 	public static function count(/* ... */)
 	{
 		$args = func_get_args();
-		$options = static::extract_and_validate_options($args);
+		$options = call_user_func(array(get_called_class(), 'extract_and_validate_options'), $args);
 		$options['select'] = 'COUNT(*)';
 
 		if (!empty($args))
 		{
-			if (is_hash($args[0]))
+			if (ActiveRecord_is_hash($args[0]))
 				$options['conditions'] = $args[0];
 			else
-				$options['conditions'] = call_user_func_array('static::pk_conditions',$args);
+				$options['conditions'] = call_user_func_array(get_called_class() . '::pk_conditions',$args);
 		}
 
-		$table = static::table();
+		$table = call_user_func(array(get_called_class(), 'table'));
 		$sql = $table->options_to_sql($options);
 		$values = $sql->get_where_values();
-		return static::connection()->query_and_fetch_one($sql->to_s(),$values);
+		$static_connection = call_user_func(array(get_called_class(), 'connection'));
+		return $static_connection->query_and_fetch_one($sql->to_s(),$values);
 	}
 
 	/**
@@ -1431,7 +1455,8 @@ class ActiveRecord_Model
 	 */
 	public static function exists(/* ... */)
 	{
-		return call_user_func_array('static::count',func_get_args()) > 0 ? true : false;
+		$args = func_get_args();
+		return call_user_func_array(get_called_class() . '::count',$args) > 0 ? true : false;
 	}
 
 	/**
@@ -1442,7 +1467,8 @@ class ActiveRecord_Model
 	 */
 	public static function first(/* ... */)
 	{
-		return call_user_func_array('static::find',array_merge(array('first'),func_get_args()));
+		$args = func_get_args();
+		return call_user_func_array(get_called_class() . '::find',array_merge(array('first'),$args));
 	}
 
 	/**
@@ -1453,7 +1479,8 @@ class ActiveRecord_Model
 	 */
 	public static function last(/* ... */)
 	{
-		return call_user_func_array('static::find',array_merge(array('last'),func_get_args()));
+		$args = func_get_args();
+		return call_user_func_array(get_called_class() . '::find',array_merge(array('last'),$args));
 	}
 
 	/**
@@ -1513,12 +1540,13 @@ class ActiveRecord_Model
 	public static function find(/* $type, $options */)
 	{
 		$class = get_called_class();
+		$static_table = call_user_func(array($class, 'table'));
 
 		if (func_num_args() <= 0)
 			throw new ActiveRecord_RecordNotFound("Couldn't find $class without an ID");
 
 		$args = func_get_args();
-		$options = static::extract_and_validate_options($args);
+		$options = call_user_func(array($class, 'extract_and_validate_options'), $args);
 		$num_args = count($args);
 		$single = true;
 
@@ -1532,7 +1560,7 @@ class ActiveRecord_Model
 
 			 	case 'last':
 					if (!array_key_exists('order',$options))
-						$options['order'] = join(' DESC, ',static::table()->pk) . ' DESC';
+						$options['order'] = join(' DESC, ',$static_table->pk) . ' DESC';
 					else
 						$options['order'] = ActiveRecord_SQLBuilder::reverse_order($options['order']);
 
@@ -1553,10 +1581,10 @@ class ActiveRecord_Model
 
 		// anything left in $args is a find by pk
 		if ($num_args > 0 && !isset($options['conditions']))
-			return static::find_by_pk($args, $options);
+			return call_user_func(array($class, 'find_by_pk'), $args, $options);
 
-		$options['mapped_names'] = static::$alias_attribute;
-		$list = static::table()->find($options);
+		$options['mapped_names'] = eval('return ' . $class . '::$alias_attribute;');
+		$list = $static_table->find($options);
 
 		return $single ? (!empty($list) ? $list[0] : null) : $list;
 	}
@@ -1572,8 +1600,9 @@ class ActiveRecord_Model
 	 */
 	public static function find_by_pk($values, $options)
 	{
-		$options['conditions'] = static::pk_conditions($values);
-		$list = static::table()->find($options);
+		$options['conditions'] = call_user_func(array(get_called_class(), 'pk_conditions'), $values);
+		$static_table = call_user_func(array(get_called_class(), 'table'));
+		$list = $static_table->find($options);
 		$results = count($list);
 
 		if ($results != ($expected = count($values)))
@@ -1608,7 +1637,8 @@ class ActiveRecord_Model
 	 */
 	public static function find_by_sql($sql, $values=null)
 	{
-		return static::table()->find_by_sql($sql, $values, true);
+		$static_table = call_user_func(array(get_called_class(), 'table'));
+		return $static_table->find_by_sql($sql, $values, true);
 	}
 
 	/**
@@ -1620,7 +1650,8 @@ class ActiveRecord_Model
 	 */
 	public static function query($sql, $values=null)
 	{
-		return static::connection()->query($sql, $values);
+		$static_connection = call_user_func(array(get_called_class(), 'connection'));
+		return $static_connection->query($sql, $values);
 	}
 
 	/**
@@ -1633,7 +1664,7 @@ class ActiveRecord_Model
 	 */
 	public static function is_options_hash($array, $throw=true)
 	{
-		if (is_hash($array))
+		if (ActiveRecord_is_hash($array))
 		{
 			$keys = array_keys($array);
 			$diff = array_diff($keys,self::$VALID_OPTIONS);
@@ -1658,7 +1689,7 @@ class ActiveRecord_Model
 	 */
 	public static function pk_conditions($args)
 	{
-		$table = static::table();
+		$table = call_user_func(array(get_called_class(), 'table'));
 		$ret = array($table->pk[0] => $args);
 		return $ret;
 	}
@@ -1688,7 +1719,7 @@ class ActiveRecord_Model
 			}
 			catch (ActiveRecordException $e)
 			{
-				if (!is_hash($last))
+				if (!ActiveRecord_is_hash($last))
 					throw $e;
 
 				$options = array('conditions' => $last);
@@ -1792,7 +1823,8 @@ class ActiveRecord_Model
 	 */
 	private function invoke_callback($method_name, $must_exist=true)
 	{
-		return static::table()->callback->invoke($this,$method_name,$must_exist);
+		$static_table = call_user_func(array(get_called_class(), 'table'));
+		return $static_table->callback->invoke($this,$method_name,$must_exist);
 	}
 
 	/**
@@ -1828,7 +1860,7 @@ class ActiveRecord_Model
 	 */
 	public static function transaction($closure)
 	{
-		$connection = static::connection();
+		$connection = call_user_func(array(get_called_class(), 'connection'));
 
 		try
 		{

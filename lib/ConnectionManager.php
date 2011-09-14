@@ -25,7 +25,7 @@ class ActiveRecord_ConnectionManager extends ActiveRecord_Singleton
 	 */
 	public static function get_connection($name=null)
 	{
-        $config = Config::instance();
+        $config = ActiveRecord_Config::instance();
         $name = $name ? $name : $config->get_default_connection();
 
 		if (!isset(self::$connections[$name]) || !self::$connections[$name]->connection)

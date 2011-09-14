@@ -74,7 +74,7 @@ class ActiveRecord_Table
 
 	public function __construct($class_name)
 	{
-		$this->class = Reflections::instance()->add($class_name)->get($class_name);
+		$this->class = ActiveRecord_Reflections::instance()->add($class_name)->get($class_name);
 
 		$this->reestablish_connection(false);
 		$this->set_table_name();
@@ -84,9 +84,9 @@ class ActiveRecord_Table
 		$this->set_delegates();
 		$this->set_setters_and_getters();
 
-		$this->callback = new CallBack($class_name);
-		$this->callback->register('before_save', function(Model $model) { $model->set_timestamps(); }, array('prepend' => true));
-		$this->callback->register('after_save', function(Model $model) { $model->reset_dirty(); }, array('prepend' => true));
+		$this->callback = new ActiveRecord_CallBack($class_name);
+		$this->callback->register('before_save', create_function('$model', '$model->set_timestamps();'), array('prepend' => true));
+		$this->callback->register('after_save', create_function('$model', '$model->reset_dirty();'), array('prepend' => true));
 	}
 
 	public function reestablish_connection($close=true)
@@ -97,7 +97,7 @@ class ActiveRecord_Table
 		if ($close)
 		{
 			ActiveRecord_ConnectionManager::drop_connection($connection);
-			static::clear_cache();
+			call_user_func(array(get_called_class(), 'clear_cache'));
 		}
 		return ($this->conn = ActiveRecord_ConnectionManager::get_connection($connection));
 	}
@@ -366,7 +366,11 @@ class ActiveRecord_Table
 
 		$table_name = $this->get_fully_qualified_table_name($quote_name);
 		$conn = $this->conn;
-		$this->columns = Cache::get("get_meta_data-$table_name", function() use ($conn, $table_name) { return $conn->columns($table_name); });
+
+		$rand = mt_rand();
+		$GLOBALS["{$rand}table_name"] = $table_name;
+		$GLOBALS["{$rand}conn"] = $conn;
+		$this->columns = ActiveRecord_Cache::get("get_meta_data-$table_name", create_function('', "return \$GLOBALS['{$rand}conn']->columns(\$GLOBALS['{$rand}table_name']);"));
 	}
 
 	/**
@@ -462,7 +466,7 @@ class ActiveRecord_Table
 			if (!$definitions)# || !is_array($definitions))
 				continue;
 
-			foreach (wrap_strings_in_arrays($definitions) as $definition)
+			foreach (ActiveRecord_wrap_strings_in_arrays($definitions) as $definition)
 			{
 				$relationship = null;
 

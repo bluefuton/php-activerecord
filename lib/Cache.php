@@ -43,36 +43,40 @@ class ActiveRecord_Cache
 			$file = ucwords(ActiveRecord_Inflector::instance()->camelize($url['scheme']));
 			$class = "ActiveRecord_$file";
 			require_once __DIR__ . "/cache/$file.php";
-			static::$adapter = new $class($url);
+
+			eval(get_called_class() . '::$adapter = new ' . $class . "('$url')");
 		}
 		else
-			static::$adapter = null;
+			eval(get_called_class() . '::$adapter = null');
 
-		static::$options = array_merge(array('expire' => 30, 'namespace' => ''),$options);
+		eval(get_called_class() . '::$options = array_merge(array(\'expire\' => 30, \'namespace\' => \'\'),$options)');
 	}
 
 	public static function flush()
 	{
-		if (static::$adapter)
-			static::$adapter->flush();
+		if (eval('return ' . get_called_class() . '::$adapter'))
+			eval(get_called_class() . '::$adapter->flush()');
 	}
 
 	public static function get($key, $closure)
 	{
-		$key = static::get_namespace() . $key;
+		$key = call_user_func(array(get_called_class(), 'get_namespace')) . $key;
 
-		if (!static::$adapter)
+		if (!eval('return ' . get_called_class() . '::$adapter;'))
 			return $closure();
 
-		if (!($value = static::$adapter->read($key)))
-			static::$adapter->write($key,($value = $closure()),static::$options['expire']);
+		$static_adapter = eval('return ' . get_called_class() . '::$adapter');
+		if (!($value = $static_adapter->read($key))) {
+			$static_adapter->write($key,($value = $closure()), eval('return ' . get_called_class() . '::$options[\'expire\']'));
+		}
 
 		return $value;
 	}
 
 	private static function get_namespace()
 	{
-		return (isset(static::$options['namespace']) && strlen(static::$options['namespace']) > 0) ? (static::$options['namespace'] . "::") : "";
+		$static_options = eval('return ' . get_called_class() . '::$options;');
+		return (isset($static_options['namespace']) && strlen($static_options['namespace']) > 0) ? ($static_options['namespace'] . "::") : "";
 	}
 }
 ?>

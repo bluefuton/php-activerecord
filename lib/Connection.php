@@ -88,8 +88,8 @@ abstract class ActiveRecord_Connection
 		if (!$connection_string)
 			throw new ActiveRecord_DatabaseException("Empty connection string");
 
-		$info = static::parse_connection_url($connection_string);
-		$fqclass = static::load_adapter_class($info->protocol);
+		$info = call_user_func(array(get_called_class(), 'parse_connection_url'), $connection_string);
+		$fqclass = call_user_func(array(get_called_class(), 'load_adapter_class'), $info->protocol);
 
 		try {
 			$connection = new $fqclass($info);
@@ -115,7 +115,7 @@ abstract class ActiveRecord_Connection
 	{
 		$class = ucwords($adapter) . 'Adapter';
 		$fqclass = 'ActiveRecord_' . $class;
-		$source = __DIR__ . "/adapters/$class.php";
+		$source = dirname(__FILE__) . "/adapters/$class.php";
 
 		if (!file_exists($source))
 			throw new ActiveRecord_DatabaseException("$fqclass not found!");
@@ -230,7 +230,8 @@ abstract class ActiveRecord_Connection
 			else
 				$host = "unix_socket=$info->host";
 
-			$this->connection = new PDO("$info->protocol:$host;dbname=$info->db", $info->user, $info->pass, static::$PDO_OPTIONS);
+			$static_pdo_options = eval('return ' . get_called_class() . '::$PDO_OPTIONS;');
+			$this->connection = new PDO("$info->protocol:$host;dbname=$info->db", $info->user, $info->pass, $static_pdo_options);
 		} catch (PDOException $e) {
 			throw new ActiveRecord_DatabaseException($e);
 		}
@@ -420,8 +421,9 @@ abstract class ActiveRecord_Connection
 	 */
 	public function quote_name($string)
 	{
-		return $string[0] === static::$QUOTE_CHARACTER || $string[strlen($string) - 1] === static::$QUOTE_CHARACTER ?
-			$string : static::$QUOTE_CHARACTER . $string . static::$QUOTE_CHARACTER;
+		$static_quote_character = eval('return ' . get_class() . '::$QUOTE_CHARACTER;');
+		return $string[0] === $static_quote_character || $string[strlen($string) - 1] === $static_quote_character ?
+			$string : $static_quote_character . $string . $static_quote_character;
 	}
 
 	/**
