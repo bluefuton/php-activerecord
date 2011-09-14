@@ -733,7 +733,7 @@ class ActiveRecord_Model
 	 */
 	public static function table()
 	{
-		return Table::load(get_called_class());
+		return ActiveRecord_Table::load(get_called_class());
 	}
 
 	/**
