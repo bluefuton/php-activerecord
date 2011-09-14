@@ -1546,7 +1546,7 @@ class ActiveRecord_Model
 			throw new ActiveRecord_RecordNotFound("Couldn't find $class without an ID");
 
 		$args = func_get_args();
-		$options = call_user_func(array($class, 'extract_and_validate_options'), $args);
+		$options = call_user_func(array($class, 'extract_and_validate_options'), &$args);
 		$num_args = count($args);
 		$single = true;
 

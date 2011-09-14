@@ -81,7 +81,7 @@ function ActiveRecord_denamespace($class_name)
 	if (is_object($class_name))
 		$class_name = get_class($class_name);
 
-	if (has_namespace($class_name))
+	if (ActiveRecord_has_namespace($class_name))
 	{
 		$parts = explode('_', $class_name);
 		return end($parts);
@@ -91,7 +91,7 @@ function ActiveRecord_denamespace($class_name)
 
 function ActiveRecord_get_namespaces($class_name)
 {
-	if (has_namespace($class_name))
+	if (ActiveRecord_has_namespace($class_name))
 		return explode('_', $class_name);
 	return null;
 }
@@ -168,11 +168,11 @@ class ActiveRecord_Utils
 		if (is_array($condition))
 		{
 			if (empty($conditions))
-				$conditions = array_flatten($condition);
+				$conditions = ActiveRecord_array_flatten($condition);
 			else
 			{
 				$conditions[0] .= " $conjuction " . array_shift($condition);
-				$conditions[] = array_flatten($condition);
+				$conditions[] = ActiveRecord_array_flatten($condition);
 			}
 		}
 		elseif (is_string($condition))

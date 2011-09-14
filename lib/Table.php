@@ -165,7 +165,7 @@ class ActiveRecord_Table
 
 		if (array_key_exists('conditions',$options))
 		{
-			if (!is_hash($options['conditions']))
+			if (!ActiveRecord_is_hash($options['conditions']))
 			{
 				if (is_string($options['conditions']))
 					$options['conditions'] = array($options['conditions']);

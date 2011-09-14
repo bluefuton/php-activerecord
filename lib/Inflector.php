@@ -102,7 +102,7 @@ abstract class ActiveRecord_Inflector
 
 	public function keyify($class_name)
 	{
-		return strtolower($this->underscorify(denamespace($class_name))) . '_id';
+		return strtolower($this->underscorify(ActiveRecord_denamespace($class_name))) . '_id';
 	}
 
 	abstract function variablize($s);

@@ -76,7 +76,7 @@ abstract class ActiveRecord_AbstractRelationship implements ActiveRecord_Interfa
 		$this->attribute_name = $options[0];
 		$this->options = $this->merge_association_options($options);
 
-		$relationship = strtolower(denamespace(get_called_class()));
+		$relationship = strtolower(ActiveRecord_denamespace(get_called_class()));
 
 		if ($relationship === 'hasmany' || $relationship === 'hasandbelongstomany')
 			$this->poly_relationship = true;
@@ -125,7 +125,7 @@ abstract class ActiveRecord_AbstractRelationship implements ActiveRecord_Interfa
 	 * @param $model_values_keys -> key(s)/value(s) to be used in query from model which is including
 	 * @return void
 	 */
-	protected function query_and_attach_related_models_eagerly(Table $table, $models, $attributes, $includes=array(), $query_keys=array(), $model_values_keys=array())
+	protected function query_and_attach_related_models_eagerly(ActiveRecord_Table $table, $models, $attributes, $includes=array(), $query_keys=array(), $model_values_keys=array())
 	{
 		$values = array();
 		$options = $this->options;
@@ -248,7 +248,7 @@ abstract class ActiveRecord_AbstractRelationship implements ActiveRecord_Interfa
 
 	protected function merge_association_options($options)
 	{
-		$available_options = array_merge(self::$valid_association_options,eval('return ' . get_called_class() . '::$valid_association_options;'));
+		$available_options = array_merge(self::$valid_association_options,eval('return ' . get_class() . '::$valid_association_options;'));
 		$valid_options = array_intersect_key(array_flip($available_options),$options);
 
 		foreach ($valid_options as $option => $v)
@@ -278,15 +278,15 @@ abstract class ActiveRecord_AbstractRelationship implements ActiveRecord_Interfa
 	protected function set_inferred_class_name()
 	{
 		$singularize = ($this instanceOf ActiveRecord_HasMany ? true : false);
-		$this->set_class_name(classify($this->attribute_name, $singularize));
+		$this->set_class_name(ActiveRecord_classify($this->attribute_name, $singularize));
 	}
 
 	protected function set_class_name($class_name)
 	{
 		$reflection = ActiveRecord_Reflections::instance()->add($class_name)->get($class_name);
 
-		if (!$reflection->isSubClassOf('ActiveRecord\\Model'))
-			throw new ActiveRecord_RelationshipException("'$class_name' must extend from ActiveRecord\\Model");
+		if (!$reflection->isSubClassOf('ActiveRecord_Model'))
+			throw new ActiveRecord_RelationshipException("'$class_name' must extend from ActiveRecord_Model");
 
 		$this->class_name = $class_name;
 	}
