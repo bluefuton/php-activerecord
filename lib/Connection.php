@@ -457,10 +457,15 @@ abstract class ActiveRecord_Connection
 	public function string_to_datetime($string)
 	{
 		$date = date_create($string);
-		$errors = DateTime::getLastErrors();
+		if (function_exists('date_get_last_errors')) {
+			$errors = DateTime::getLastErrors();
 
-		if ($errors['warning_count'] > 0 || $errors['error_count'] > 0)
+			if ($errors['warning_count'] > 0 || $errors['error_count'] > 0)
+				return null;
+		}
+		elseif (!is_object($date)) {
 			return null;
+		}
 
 		return new ActiveRecord_DateTime($date->format('Y-m-d H:i:s T'));
 	}

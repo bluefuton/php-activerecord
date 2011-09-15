@@ -254,7 +254,7 @@ class ActiveRecord_Model
 		if (!$instantiating_via_find)
 		{
 			$table = call_user_func(array(get_class($this), 'table'));
-			foreach ($table()->columns as $name => $meta)
+			foreach ($table->columns as $name => $meta)
 				$this->attributes[$meta->inflected_name] = $meta->default;
 		}
 
