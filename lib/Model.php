@@ -253,7 +253,7 @@ class ActiveRecord_Model
 		// initialize attributes applying defaults
 		if (!$instantiating_via_find)
 		{
-			$table = call_user_func(array(get_called_class(), 'table'));
+			$table = call_user_func(array(get_class($this), 'table'));
 			foreach ($table()->columns as $name => $meta)
 				$this->attributes[$meta->inflected_name] = $meta->default;
 		}
@@ -341,7 +341,7 @@ class ActiveRecord_Model
 	 */
 	public function __isset($attribute_name)
 	{
-		$static_attribute_name = eval('return ' . get_called_class() . '::$alias_attribute;');
+		$static_attribute_name = eval('return ' . get_class($this) . '::$alias_attribute;');
 		return array_key_exists($attribute_name,$this->attributes) || array_key_exists($attribute_name,$static_attribute_name);
 	}
 
@@ -397,7 +397,7 @@ class ActiveRecord_Model
 	 */
 	public function __set($name, $value)
 	{
-		$static_attribute_name = eval('return ' . get_called_class() . '::$alias_attribute;');
+		$static_attribute_name = eval('return ' . get_class($this) . '::$alias_attribute;');
 		if (array_key_exists($name, $static_attribute_name))
 			$name = $static_attribute_name[$name];
 
@@ -413,20 +413,20 @@ class ActiveRecord_Model
 		if ($name == 'id')
 			return $this->assign_attribute($this->get_primary_key(true),$value);
 
-		$static_delegate = eval('return ' . get_called_class() . '::$delegate');
+		$static_delegate = eval('return ' . get_class($this) . '::$delegate');
 		foreach ($static_delegate as &$item)
 		{
 			if (($delegated_name = $this->is_delegated($name,$item)))
 				return $this->$item['to']->$delegated_name = $value;
 		}
 
-		throw new ActiveRecord_UndefinedPropertyException(get_called_class(),$name);
+		throw new ActiveRecord_UndefinedPropertyException(get_class($this),$name);
 	}
 
 	public function __wakeup()
 	{
 		// make sure the models Table instance gets initialized when waking up
-		call_user_func(array(get_called_class(), 'table'));
+		call_user_func(array(get_class($this), 'table'));
 	}
 
 	/**
@@ -438,10 +438,10 @@ class ActiveRecord_Model
 	 */
 	public function assign_attribute($name, $value)
 	{
-		$table = call_user_func(array(get_called_class(), 'table'));
+		$table = call_user_func(array(get_class($this), 'table'));
 
 		if (array_key_exists($name,$table->columns) && !is_object($value)) {
-			$static_connection = call_user_func(array(get_called_class(), 'connection'));
+			$static_connection = call_user_func(array(get_class($this), 'connection'));
 			$value = $table->columns[$name]->cast($value,$static_connection);
 		}
 
@@ -471,7 +471,7 @@ class ActiveRecord_Model
 	public function &read_attribute($name)
 	{
 		// check for aliased attribute
-		$static_attribute_name = eval('return ' . get_called_class() . '::$alias_attribute;');
+		$static_attribute_name = eval('return ' . get_class($this) . '::$alias_attribute;');
 		if (array_key_exists($name, $static_attribute_name))
 			$name = $static_attribute_name[$name];
 
@@ -483,7 +483,7 @@ class ActiveRecord_Model
 		if (array_key_exists($name,$this->__relationships))
 			return $this->__relationships[$name];
 
-		$table = call_user_func(array(get_called_class(), 'table'));
+		$table = call_user_func(array(get_class($this), 'table'));
 
 		// this may be first access to the relationship so check Table
 		if (($relationship = $table->get_relationship($name)))
@@ -502,7 +502,7 @@ class ActiveRecord_Model
 		//do not remove - have to return null by reference in strict mode
 		$null = null;
 
-		$static_delegate = eval('return ' . get_called_class() . '::$delegate');
+		$static_delegate = eval('return ' . get_class($this) . '::$delegate');
 		foreach ($static_delegate as &$item)
 		{
 			if (($delegated_name = $this->is_delegated($name,$item)))
@@ -518,7 +518,7 @@ class ActiveRecord_Model
 			}
 		}
 
-		throw new ActiveRecord_UndefinedPropertyException(get_called_class(),$name);
+		throw new ActiveRecord_UndefinedPropertyException(get_class($this),$name);
 	}
 
 	/**
@@ -576,7 +576,7 @@ class ActiveRecord_Model
 	 */
 	public function get_primary_key($first=false)
 	{
-		$static_table = call_user_func(array(get_called_class(), 'table'));
+		$static_table = call_user_func(array(get_class($this), 'table'));
 		$pk = $static_table->pk;
 		return $first ? $pk[0] : $pk;
 	}
@@ -592,7 +592,7 @@ class ActiveRecord_Model
 		if (array_key_exists($name,$this->attributes))
 			return $name;
 
-		$static_attribute_name = eval('return ' . get_called_class() . '::$alias_attribute;');
+		$static_attribute_name = eval('return ' . get_class($this) . '::$alias_attribute;');
 		if (array_key_exists($name,$static_attribute_name))
 			return $static_attribute_name[$name];
 
@@ -796,7 +796,7 @@ class ActiveRecord_Model
 		if (($validate && !$this->_validate() || !$this->invoke_callback('before_create',false)))
 			return false;
 
-		$table = call_user_func(array(get_called_class(), 'table'));
+		$table = call_user_func(array(get_class($this), 'table'));
 
 		if (!($attributes = $this->dirty_attributes()))
 			$attributes = $this->attributes;
@@ -806,7 +806,7 @@ class ActiveRecord_Model
 
 		if ($table->sequence && !isset($attributes[$pk]))
 		{
-			if (($conn = call_user_func(array(get_called_class(), 'connection'))) instanceof ActiveRecord_OciAdapter)
+			if (($conn = call_user_func(array(get_class($this), 'connection'))) instanceof ActiveRecord_OciAdapter)
 			{
 				// terrible oracle makes us select the nextval first
 				$attributes[$pk] = $conn->get_next_sequence_value($table->sequence);
@@ -833,7 +833,7 @@ class ActiveRecord_Model
 			$column = $table->get_column_by_inflected_name($pk);
 
 			if ($column->auto_increment || $use_sequence) {
-				$static_connection = call_user_func(array(get_called_class(), 'connection'));
+				$static_connection = call_user_func(array(get_class($this), 'connection'));
 				$this->attributes[$pk] = $static_connection->insert_id($table->sequence);
 			}
 		}
@@ -862,13 +862,13 @@ class ActiveRecord_Model
 			$pk = $this->values_for_pk();
 
 			if (empty($pk))
-				throw new ActiveRecordException("Cannot update, no primary key defined for: " . get_called_class());
+				throw new ActiveRecordException("Cannot update, no primary key defined for: " . get_class($this));
 
 			if (!$this->invoke_callback('before_update',false))
 				return false;
 
 			$dirty = $this->dirty_attributes();
-			$static_table = call_user_func(array(get_called_class(), 'table'));
+			$static_table = call_user_func(array(get_class($this), 'table'));
 			$static_table->update($dirty,$pk);
 			$this->invoke_callback('after_update',false);
 		}
@@ -1003,12 +1003,12 @@ class ActiveRecord_Model
 		$pk = $this->values_for_pk();
 
 		if (empty($pk))
-			throw new ActiveRecordException("Cannot delete, no primary key defined for: " . get_called_class());
+			throw new ActiveRecordException("Cannot delete, no primary key defined for: " . get_class($this));
 
 		if (!$this->invoke_callback('before_destroy',false))
 			return false;
 
-		$static_table = call_user_func(array(get_called_class(), 'table'));
+		$static_table = call_user_func(array(get_class($this), 'table'));
 		$static_table->delete($pk);
 		$this->invoke_callback('after_destroy',false);
 
@@ -1022,7 +1022,7 @@ class ActiveRecord_Model
 	 */
 	public function values_for_pk()
 	{
-		$static_table = call_user_func(array(get_called_class(), 'table'));
+		$static_table = call_user_func(array(get_class($this), 'table'));
 		return $this->values_for($static_table->pk);
 	}
 
@@ -1168,13 +1168,13 @@ class ActiveRecord_Model
 	private function set_attributes_via_mass_assignment(array &$attributes, $guard_attributes)
 	{
 		//access uninflected columns since that is what we would have in result set
-		$table = call_user_func(array(get_called_class(), 'table'));
+		$table = call_user_func(array(get_class($this), 'table'));
 		$exceptions = array();
-		$static_attr_accessible = eval('return ' . get_called_class() . '::$attr_accessible;');
-		$static_attr_protected = eval('return ' . get_called_class() . '::$attr_protected;');
+		$static_attr_accessible = eval('return ' . get_class($this) . '::$attr_accessible;');
+		$static_attr_protected = eval('return ' . get_class($this) . '::$attr_protected;');
 		$use_attr_accessible = !empty($static_attr_accessible);
 		$use_attr_protected = !empty($static_attr_protected);
-		$connection = call_user_func(array(get_called_class(), 'connection'));
+		$connection = call_user_func(array(get_class($this), 'connection'));
 
 		foreach ($attributes as $name => $value)
 		{
@@ -1212,7 +1212,7 @@ class ActiveRecord_Model
 		}
 
 		if (!empty($exceptions))
-			throw new ActiveRecord_UndefinedPropertyException(get_called_class(),$exceptions);
+			throw new ActiveRecord_UndefinedPropertyException(get_class($this),$exceptions);
 	}
 
 	/**
@@ -1223,9 +1223,9 @@ class ActiveRecord_Model
 	 * @param $name of relationship for this table
 	 * @return void
 	 */
-	public function set_relationship_from_eager_load(Model $model=null, $name)
+	public function set_relationship_from_eager_load(ActiveRecord_Model $model=null, $name)
 	{
-		$table = call_user_func(array(get_called_class(), 'table'));
+		$table = call_user_func(array(get_class($this), 'table'));
 
 		if (($rel = $table->get_relationship($name)))
 		{
@@ -1383,7 +1383,7 @@ class ActiveRecord_Model
 
 			$association_name = str_replace(array('build_', 'create_'), '', $method);
 			$method = str_replace($association_name, 'association', $method);
-			$table = call_user_func(array(get_called_class(), 'table'));
+			$table = call_user_func(array(get_class($this), 'table'));
 
 			if (($association = $table->get_relationship($association_name)) ||
 				  ($association = $table->get_relationship(($association_name = Utils::pluralize($association_name)))))
@@ -1823,7 +1823,7 @@ class ActiveRecord_Model
 	 */
 	private function invoke_callback($method_name, $must_exist=true)
 	{
-		$static_table = call_user_func(array(get_called_class(), 'table'));
+		$static_table = call_user_func(array(get_class($this), 'table'));
 		return $static_table->callback->invoke($this,$method_name,$must_exist);
 	}
 

@@ -76,7 +76,7 @@ abstract class ActiveRecord_AbstractRelationship implements ActiveRecord_Interfa
 		$this->attribute_name = $options[0];
 		$this->options = $this->merge_association_options($options);
 
-		$relationship = strtolower(ActiveRecord_denamespace(get_called_class()));
+		$relationship = strtolower(ActiveRecord_denamespace(get_class($this)));
 
 		if ($relationship === 'hasmany' || $relationship === 'hasandbelongstomany')
 			$this->poly_relationship = true;
@@ -248,7 +248,7 @@ abstract class ActiveRecord_AbstractRelationship implements ActiveRecord_Interfa
 
 	protected function merge_association_options($options)
 	{
-		$available_options = array_merge(self::$valid_association_options,eval('return ' . get_class() . '::$valid_association_options;'));
+		$available_options = array_merge(self::$valid_association_options,eval('return ' . get_class($this) . '::$valid_association_options;'));
 		$valid_options = array_intersect_key(array_flip($available_options),$options);
 
 		foreach ($valid_options as $option => $v)
@@ -490,7 +490,7 @@ class ActiveRecord_HasMany extends ActiveRecord_AbstractRelationship
 				if (!($through_relationship = $this->get_table()->get_relationship($this->through)))
 					throw new ActiveRecord_HasManyThroughAssociationException("Could not find the association $this->through in model " . get_class($model));
 
-				if (!($through_relationship instanceof HasMany) && !($through_relationship instanceof BelongsTo))
+				if (!($through_relationship instanceof HasMany) && !($through_relationship instanceof ActiveRecord_BelongsTo))
 					throw new ActiveRecord_HasManyThroughAssociationException('has_many through can only use a belongs_to or has_many association');
 
 				// save old keys as we will be reseting them below for inner join convenience
@@ -656,7 +656,7 @@ class ActiveRecord_BelongsTo extends ActiveRecord_AbstractRelationship
 		$options = $this->unset_non_finder_options($this->options);
 		$options['conditions'] = $conditions;
 		$class = $this->class_name;
-		return call_user_func(array(get_called_class(), 'first'), $options);
+		return call_user_func(array(get_class($this), 'first'), $options);
 	}
 
 	public function load_eagerly($models=array(), $attributes, $includes, ActiveRecord_Table $table)

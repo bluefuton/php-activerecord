@@ -16,11 +16,14 @@ if (!function_exists('get_called_class')) {
 		static $cache = array();
 		$backtrace = debug_backtrace();
 
-		//print_r($backtrace);
 		for ($i = 0; $i < count($backtrace); $i++) {
-			//echo "checking $i...\n";
+			// handle call_user_func calls
+			if (isset($backtrace[$i]["function"]) and $backtrace[$i]["function"] == "call_user_func") {
+				$class = $backtrace[$i]["args"][0];
+				return is_array($class) ? $class[0] : substr($class, 0, strpos($class, '::'));
+			}
+			// handle explict static calls, by searching the source file
 			if (isset($backtrace[$i]["file"]) and isset($backtrace[$i]["type"]) and $backtrace[$i]["type"] == "::") {
-				//echo @$backtrace[$i]["function"] . " ---- " . @$backtrace[$i]["type"] . "\n"; print_r($backtrace[$i]);
 				if (!isset($cache[$backtrace[$i]["file"].$backtrace[$i]["line"]])) {
 					// static method call, get the line from the file
 					$file = file_get_contents($backtrace[$i]["file"]);
@@ -37,7 +40,6 @@ if (!function_exists('get_called_class')) {
 				return $cache[$backtrace[$i]["file"].$backtrace[$i]["line"]];
 			}
 		}
-
 		throw new Exception("The function get_called_class() must be called from a static context.");
 	}
 }

@@ -97,7 +97,7 @@ class ActiveRecord_Table
 		if ($close)
 		{
 			ActiveRecord_ConnectionManager::drop_connection($connection);
-			call_user_func(array(get_called_class(), 'clear_cache'));
+			call_user_func(array(get_class($this), 'clear_cache'));
 		}
 		return ($this->conn = ActiveRecord_ConnectionManager::get_connection($connection));
 	}

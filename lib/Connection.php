@@ -230,7 +230,7 @@ abstract class ActiveRecord_Connection
 			else
 				$host = "unix_socket=$info->host";
 
-			$static_pdo_options = eval('return ' . get_called_class() . '::$PDO_OPTIONS;');
+			$static_pdo_options = eval('return ' . get_class($this) . '::$PDO_OPTIONS;');
 			$this->connection = new PDO("$info->protocol:$host;dbname=$info->db", $info->user, $info->pass, $static_pdo_options);
 		} catch (PDOException $e) {
 			throw new ActiveRecord_DatabaseException($e);
@@ -421,7 +421,7 @@ abstract class ActiveRecord_Connection
 	 */
 	public function quote_name($string)
 	{
-		$static_quote_character = eval('return ' . get_class() . '::$QUOTE_CHARACTER;');
+		$static_quote_character = eval('return ' . get_class($this) . '::$QUOTE_CHARACTER;');
 		return $string[0] === $static_quote_character || $string[strlen($string) - 1] === $static_quote_character ?
 			$string : $static_quote_character . $string . $static_quote_character;
 	}
