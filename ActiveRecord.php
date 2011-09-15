@@ -14,30 +14,34 @@
 if (!function_exists('get_called_class')) {
 	function get_called_class() {
 		static $cache = array();
-		$backtrace = debug_backtrace();
-
-		for ($i = 0; $i < count($backtrace); $i++) {
-			// handle call_user_func calls
-			if (isset($backtrace[$i]["function"]) and $backtrace[$i]["function"] == "call_user_func") {
-				$class = $backtrace[$i]["args"][0];
-				return is_array($class) ? $class[0] : substr($class, 0, strpos($class, '::'));
+		foreach (debug_backtrace() as $backtrace) {
+			// handle call_user_func and call_user_func_array static calls
+			if (isset($backtrace["function"]) and ($backtrace["function"] == "call_user_func" or $backtrace["function"] == "call_user_func_array")) {
+				$class = $backtrace["args"][0];
+				if (is_string($class)) {
+					$found = strpos($class, '::');
+					if ($found !== false) {
+						return substr($class, 0, $found);
+					}
+				}
+				if (is_array($class) and is_string($class[0])) {
+					return $class[0];
+				}
 			}
-			// handle explict static calls, by searching the source file
-			if (isset($backtrace[$i]["file"]) and isset($backtrace[$i]["type"]) and $backtrace[$i]["type"] == "::") {
-				if (!isset($cache[$backtrace[$i]["file"].$backtrace[$i]["line"]])) {
-					// static method call, get the line from the file
-					$file = file_get_contents($backtrace[$i]["file"]);
+			// handle explict static calls, by searching the source file (caching the results)
+			if (isset($backtrace["file"]) and isset($backtrace["type"]) and $backtrace["type"] == "::") {
+				if (!isset($cache[$backtrace["file"].$backtrace["line"]])) {
+					$file = file_get_contents($backtrace["file"]);
 					$file = split("\n", $file);
-					for($line = $backtrace[$i]["line"] - 1; $line > 0; $line--) {
+					for($line = $backtrace["line"] - 1; $line > 0; $line--) {
 						preg_match("/(?P<class>\w+)::(.*)/", trim($file[$line]), $matches);
 						if (isset($matches["class"])) {
-							$cache[$backtrace[$i]["file"].$backtrace[$i]["line"]] = $matches["class"];
-							return $matches["class"];
+							return $cache[$backtrace["file"].$backtrace["line"]] = $matches["class"];
 						}
 					}
 					throw new Exception("Could not find class in get_called_class()");
 				}
-				return $cache[$backtrace[$i]["file"].$backtrace[$i]["line"]];
+				return $cache[$backtrace["file"].$backtrace["line"]];
 			}
 		}
 		throw new Exception("The function get_called_class() must be called from a static context.");
