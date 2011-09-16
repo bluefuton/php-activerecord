@@ -297,7 +297,7 @@ abstract class ActiveRecord_AbstractRelationship implements ActiveRecord_Interfa
 		$condition_values = array_values($model->get_values_for($value_keys));
 
 		// return null if all the foreign key values are null so that we don't try to do a query like "id is null"
-		if (all(null,$condition_values))
+		if (ActiveRecord_all(null,$condition_values))
 			return null;
 
 		$conditions = ActiveRecord_SQLBuilder::create_conditions_from_underscored_string(ActiveRecord_Table::load(get_class($model))->conn,$condition_string,$condition_values);
@@ -656,7 +656,7 @@ class ActiveRecord_BelongsTo extends ActiveRecord_AbstractRelationship
 		$options = $this->unset_non_finder_options($this->options);
 		$options['conditions'] = $conditions;
 		$class = $this->class_name;
-		return call_user_func(array(get_class($this), 'first'), $options);
+		return call_user_func(array($class, 'first'), $options);
 	}
 
 	public function load_eagerly($models=array(), $attributes, $includes, ActiveRecord_Table $table)
