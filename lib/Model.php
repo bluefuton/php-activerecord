@@ -1423,7 +1423,7 @@ class ActiveRecord_Model
 	public static function count(/* ... */)
 	{
 		$args = func_get_args();
-		$options = call_user_func(array(get_called_class(), 'extract_and_validate_options'), $args);
+		$options = call_user_func_array(array(get_called_class(), 'extract_and_validate_options'), array($args));
 		$options['select'] = 'COUNT(*)';
 
 		if (!empty($args))
@@ -1546,7 +1546,7 @@ class ActiveRecord_Model
 			throw new ActiveRecord_RecordNotFound("Couldn't find $class without an ID");
 
 		$args = func_get_args();
-		$options = call_user_func(array($class, 'extract_and_validate_options'), &$args);
+		$options = call_user_func_array(array($class, 'extract_and_validate_options'), array($args));
 		$num_args = count($args);
 		$single = true;
 
