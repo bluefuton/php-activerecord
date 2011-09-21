@@ -85,8 +85,8 @@ class ActiveRecord_Table
 		$this->set_setters_and_getters();
 
 		$this->callback = new ActiveRecord_CallBack($class_name);
-		$this->callback->register('before_save', create_function('$model', '$model->set_timestamps();'), array('prepend' => true));
-		$this->callback->register('after_save', create_function('$model', '$model->reset_dirty();'), array('prepend' => true));
+		$this->callback->register('before_save', create_function('$model', '$model->set_timestamps(); $model->serialize_attributes();'), array('prepend' => true));
+		$this->callback->register('after_save', create_function('$model', '$model->reset_dirty(); $model->unserialize_attributes();'), array('prepend' => true));
 	}
 
 	public function reestablish_connection($close=true)

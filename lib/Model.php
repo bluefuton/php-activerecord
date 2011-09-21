@@ -206,6 +206,19 @@ class ActiveRecord_Model
 	static $attr_protected = array();
 
 	/**
+	 * Saving arrays, hashes, and other non-mappable objects in text columns.
+	 *
+	 * <code>
+	 * class Person extends ActiveRecord\Model {
+	 *   static $serialize = array('preferences', 'nicknames');
+	 * }
+	 * </code>
+	 *
+	 * @var array
+	 */
+	static $serialize = array();
+
+	/**
 	 * Delegates calls to a relationship.
 	 *
 	 * <code>
@@ -265,7 +278,36 @@ class ActiveRecord_Model
 		if ($instantiating_via_find)
 			$this->__dirty = array();
 
+		// initialize attribute serialization
+		$this->unserialize_attributes();
+
 		$this->invoke_callback('after_construct',false);
+	}
+
+	/**
+	 * Serialize attributes that need to be saved to the database as an object.
+	 */
+	public function serialize_attributes()
+	{
+		$static_serialize = eval('return ' . get_class($this) . '::$serialize;');
+		foreach ($static_serialize as $name)
+		{
+			$this->attributes[$name] = serialize($this->attributes[$name]);
+			$this->flag_dirty($name);
+		}
+	}
+
+	/**
+	 * Retrieve attributes that were saved to the database as an object.
+	 */
+	public function unserialize_attributes()
+	{
+		$static_serialize = eval('return ' . get_class($this) . '::$serialize;');
+		foreach ($static_serialize as $name)
+		{
+			$this->attributes[$name] = unserialize($this->attributes[$name]);
+			$this->flag_dirty($name);
+		}
 	}
 
 	/**
@@ -1423,7 +1465,7 @@ class ActiveRecord_Model
 	public static function count(/* ... */)
 	{
 		$args = func_get_args();
-		$options = call_user_func_array(array(get_called_class(), 'extract_and_validate_options'), array($args));
+		$options = call_user_func_array(array(get_called_class(), 'extract_and_validate_options'), array(&$args));
 		$options['select'] = 'COUNT(*)';
 
 		if (!empty($args))
@@ -1546,7 +1588,7 @@ class ActiveRecord_Model
 			throw new ActiveRecord_RecordNotFound("Couldn't find $class without an ID");
 
 		$args = func_get_args();
-		$options = call_user_func_array(array($class, 'extract_and_validate_options'), array($args));
+		$options = call_user_func_array(array($class, 'extract_and_validate_options'), array(&$args));
 		$num_args = count($args);
 		$single = true;
 
