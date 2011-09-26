@@ -118,7 +118,7 @@ class ActiveRecord_CallBack
 					$definition = array($definition);
 
 				foreach ($definition as $method_name)
-					$this->register($name,$method_name);
+						$this->register($name,$method_name);
 			}
 
 			// implicit callbacks that don't need to have a static definition
@@ -183,7 +183,7 @@ class ActiveRecord_CallBack
 		{
 			foreach ($registry as $method)
 			{
-				$ret = $model->$method();
+				$ret = (preg_match("#lambda_\d+#", $method) ? $method($model) : $model->$method());
 
 				if (false === $ret && $first === 'before')
 					return false;

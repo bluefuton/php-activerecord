@@ -483,8 +483,11 @@ class ActiveRecord_Model
 		$table = call_user_func(array(get_class($this), 'table'));
 
 		if (array_key_exists($name,$table->columns) && !is_object($value)) {
-			$static_connection = call_user_func(array(get_class($this), 'connection'));
-			$value = $table->columns[$name]->cast($value,$static_connection);
+			$static_serialize = eval('return ' . get_class($this) . '::$serialize;');
+			if (!in_array($name, $static_serialize)) {
+				$static_connection = call_user_func(array(get_class($this), 'connection'));
+				$value = $table->columns[$name]->cast($value,$static_connection);
+			}
 		}
 
 		// convert php's \DateTime to ours

@@ -137,7 +137,7 @@ class ActiveRecord_Validations
 			$this->$validate(wrap_strings_in_arrays($definition));
 		}
 
-		$model_reflection = Reflections::instance()->get($this->model);
+		$model_reflection = ActiveRecord_Reflections::instance()->get($this->model);
 
 		if ($model_reflection->hasMethod('validate') && $model_reflection->getMethod('validate')->isPublic())
 			$this->model->validate();
@@ -788,9 +788,7 @@ class ActiveRecord_Errors implements IteratorAggregate
 	{
 		$full_messages = array();
 
-		$this->to_array(function($attribute, $message) use (&$full_messages) {
-			$full_messages[] = $message;
-		});
+		$full_messages = $this->to_array();
 
 		return $full_messages;
 	}
