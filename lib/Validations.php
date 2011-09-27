@@ -109,7 +109,7 @@ class ActiveRecord_Validations
 		{
 			$attrs = $this->klass->getStaticPropertyValue($validate);
 
-			foreach (wrap_strings_in_arrays($attrs) as $attr)
+			foreach (ActiveRecord_wrap_strings_in_arrays($attrs) as $attr)
 			{
 				$field = $attr[0];
 
@@ -134,7 +134,7 @@ class ActiveRecord_Validations
 		foreach ($this->validators as $validate)
 		{
 			$definition = $this->klass->getStaticPropertyValue($validate);
-			$this->$validate(wrap_strings_in_arrays($definition));
+			$this->$validate(ActiveRecord_wrap_strings_in_arrays($definition));
 		}
 
 		$model_reflection = ActiveRecord_Reflections::instance()->get($this->model);
@@ -170,7 +170,7 @@ class ActiveRecord_Validations
 	 */
 	public function validates_presence_of($attrs)
 	{
-		$configuration = array_merge(self::$DEFAULT_VALIDATION_OPTIONS, array('message' => Errors::$DEFAULT_ERROR_MESSAGES['blank'], 'on' => 'save'));
+		$configuration = array_merge(self::$DEFAULT_VALIDATION_OPTIONS, array('message' => ActiveRecord_Errors::$DEFAULT_ERROR_MESSAGES['blank'], 'on' => 'save'));
 
 		foreach ($attrs as $attr)
 		{
@@ -317,7 +317,7 @@ class ActiveRecord_Validations
 			if ($this->is_null_with_option($var, $options))
 				continue;
 
-			$not_a_number_message = (isset($options['message']) ? $options['message'] : Errors::$DEFAULT_ERROR_MESSAGES['not_a_number']);
+			$not_a_number_message = (isset($options['message']) ? $options['message'] : ActiveRecord_Errors::$DEFAULT_ERROR_MESSAGES['not_a_number']);
 
 			if (true === $options['only_integer'] && !is_integer($var))
 			{
@@ -341,7 +341,7 @@ class ActiveRecord_Validations
 			foreach ($numericalityOptions as $option => $check)
 			{
 				$option_value = $options[$option];
-				$message = (isset($options['message']) ? $options['message'] : Errors::$DEFAULT_ERROR_MESSAGES[$option]);
+				$message = (isset($options['message']) ? $options['message'] : ActiveRecord_Errors::$DEFAULT_ERROR_MESSAGES[$option]);
 
 				if ('odd' != $option && 'even' != $option)
 				{
@@ -410,7 +410,7 @@ class ActiveRecord_Validations
 	 */
 	public function validates_format_of($attrs)
 	{
-		$configuration = array_merge(self::$DEFAULT_VALIDATION_OPTIONS, array('message' => Errors::$DEFAULT_ERROR_MESSAGES['invalid'], 'on' => 'save', 'with' => null));
+		$configuration = array_merge(self::$DEFAULT_VALIDATION_OPTIONS, array('message' => ActiveRecord_Errors::$DEFAULT_ERROR_MESSAGES['invalid'], 'on' => 'save', 'with' => null));
 
 		foreach ($attrs as $attr)
 		{
@@ -599,7 +599,7 @@ class ActiveRecord_Validations
 
 			$conditions[0] = $sql;
 
-			if ($this->model->exists(array('conditions' => $conditions)))
+			if (call_user_func(get_class($this->model) . '::exists', array('conditions' => $conditions)))
 				$this->record->add($add_record, $options['message']);
 		}
 	}
