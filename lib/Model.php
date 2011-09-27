@@ -455,7 +455,7 @@ class ActiveRecord_Model
 		if ($name == 'id')
 			return $this->assign_attribute($this->get_primary_key(true),$value);
 
-		$static_delegate = eval('return ' . get_class($this) . '::$delegate');
+		$static_delegate = eval('return ' . get_class($this) . '::$delegate;');
 		foreach ($static_delegate as &$item)
 		{
 			if (($delegated_name = $this->is_delegated($name,$item)))
@@ -547,7 +547,7 @@ class ActiveRecord_Model
 		//do not remove - have to return null by reference in strict mode
 		$null = null;
 
-		$static_delegate = eval('return ' . get_class($this) . '::$delegate');
+		$static_delegate = eval('return ' . get_class($this) . '::$delegate;');
 		foreach ($static_delegate as &$item)
 		{
 			if (($delegated_name = $this->is_delegated($name,$item)))
