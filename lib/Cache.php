@@ -42,20 +42,20 @@ class ActiveRecord_Cache
 			$url = parse_url($url);
 			$file = ucwords(ActiveRecord_Inflector::instance()->camelize($url['scheme']));
 			$class = "ActiveRecord_$file";
-			require_once __DIR__ . "/cache/$file.php";
+			require_once dirname(__FILE__) . "/cache/$file.php";
 
-			eval(get_called_class() . '::$adapter = new ' . $class . "('$url')");
+			eval(get_called_class() . '::$adapter = new ' . $class . "('$url');");
 		}
 		else
-			eval(get_called_class() . '::$adapter = null');
+			eval(get_called_class() . '::$adapter = null;');
 
-		eval(get_called_class() . '::$options = array_merge(array(\'expire\' => 30, \'namespace\' => \'\'),$options)');
+		eval(get_called_class() . '::$options = array_merge(array(\'expire\' => 30, \'namespace\' => \'\'),$options);');
 	}
 
 	public static function flush()
 	{
-		if (eval('return ' . get_called_class() . '::$adapter'))
-			eval(get_called_class() . '::$adapter->flush()');
+		if (eval('return ' . get_called_class() . '::$adapter;'))
+			eval(get_called_class() . '::$adapter->flush();');
 	}
 
 	public static function get($key, $closure)
@@ -65,9 +65,9 @@ class ActiveRecord_Cache
 		if (!eval('return ' . get_called_class() . '::$adapter;'))
 			return $closure();
 
-		$static_adapter = eval('return ' . get_called_class() . '::$adapter');
+		$static_adapter = eval('return ' . get_called_class() . '::$adapter;');
 		if (!($value = $static_adapter->read($key))) {
-			$static_adapter->write($key,($value = $closure()), eval('return ' . get_called_class() . '::$options[\'expire\']'));
+			$static_adapter->write($key,($value = $closure()), eval('return ' . get_called_class() . '::$options[\'expire\'];'));
 		}
 
 		return $value;

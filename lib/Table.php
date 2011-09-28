@@ -440,7 +440,7 @@ class ActiveRecord_Table
 			$this->table = ActiveRecord_Inflector::instance()->tableize($this->class->getName());
 
 			// strip namespaces from the table name if any
-			$parts = explode('_',$this->table);
+			$parts = explode('::',$this->table);
 			$this->table = $parts[count($parts)-1];
 		}
 
