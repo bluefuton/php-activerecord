@@ -290,9 +290,20 @@ class ActiveRecord_Model
 	public function serialize_attributes()
 	{
 		$static_serialize = eval('return ' . get_class($this) . '::$serialize;');
-		foreach ($static_serialize as $name)
+		foreach ($static_serialize as $name => $formatter)
 		{
-			$this->attributes[$name] = serialize($this->attributes[$name]);
+			$name      =  is_numeric($name) ? $formatter : $name;
+			$formatter = !is_numeric($name) ? $formatter : 'php';
+
+			switch($formatter) {
+				case 'json':
+					$this->attributes[$name] = json_encode($this->attributes[$name]);
+					break;
+
+				default:
+					$this->attributes[$name] = serialize($this->attributes[$name]);
+			}
+
 			$this->flag_dirty($name);
 		}
 	}
@@ -303,9 +314,20 @@ class ActiveRecord_Model
 	public function unserialize_attributes()
 	{
 		$static_serialize = eval('return ' . get_class($this) . '::$serialize;');
-		foreach ($static_serialize as $name)
+		foreach ($static_serialize as $name => $formatter)
 		{
-			$this->attributes[$name] = unserialize($this->attributes[$name]);
+			$name      =  is_numeric($name) ? $formatter : $name;
+			$formatter = !is_numeric($name) ? $formatter : 'php';
+
+			switch($formatter) {
+				case 'json':
+					$this->attributes[$name] = json_decode($this->attributes[$name], true);
+					break;
+
+				default:
+					$this->attributes[$name] = unserialize($this->attributes[$name]);
+			}
+
 			$this->flag_dirty($name);
 		}
 	}
