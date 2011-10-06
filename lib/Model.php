@@ -506,7 +506,13 @@ class ActiveRecord_Model
 
 		if (array_key_exists($name,$table->columns) && !is_object($value)) {
 			$static_serialize = eval('return ' . get_class($this) . '::$serialize;');
-			if (!in_array($name, $static_serialize)) {
+			$static_serialize_found = false;
+			foreach ($static_serialize as $serialize_index => $serialize_value)
+			{
+				$field_name = is_numeric($serialize_index) ? $serialize_value : $serialize_index;
+				if ($name == $field_name) $static_serialize_found = true;
+			}
+			if (!$static_serialize_found) {
 				$static_connection = call_user_func(array(get_class($this), 'connection'));
 				$value = $table->columns[$name]->cast($value,$static_connection);
 			}
