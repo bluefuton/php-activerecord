@@ -50,6 +50,7 @@ class ActiveRecord_Validations
 		'validates_exclusion_of',
 		'validates_format_of',
 		'validates_numericality_of',
+		'validates_confirmation_of',
 		'validates_uniqueness_of'
 	);
 
@@ -534,6 +535,46 @@ class ActiveRecord_Validations
 	}
 
 	/**
+	 * Validates that a field, if set, has a confirmation
+	 * field with the same contents.
+	 *
+	 * <code>
+	 * class Person extends ActiveRecord\Model {
+	 *   static $validates_confirmation_of = array(
+	 *     array('email_address')
+	 *   );
+	 * }
+	 * </code>
+	 *
+	 * Available options:
+	 *
+	 * <ul>
+	 * <li><b>message:</b> custom error message</li>
+	 * </ul>
+	 *
+	 * @param array $attrs Validation definition
+	 */
+	public function validates_confirmation_of($attrs)
+	{
+		$configuration = array_merge(self::$DEFAULT_VALIDATION_OPTIONS, array('message' => ActiveRecord_Errors::$DEFAULT_ERROR_MESSAGES['confirmation'], 'on' => 'save'));
+
+		foreach($attrs as $attr)
+		{
+			$options = array_merge($configuration, $attr);
+			$attribute = $options[0];
+			$attribute_confirmation = "{$attribute}_confirmation";
+
+			if(isset($this->model->$attribute))
+			{
+				if($this->model->$attribute !== $this->model->$attribute_confirmation)
+				{
+					$this->record->add($attribute, $options['message']);
+				}
+			}
+		}
+	}
+
+	/**
 	 * Validates the uniqueness of a value.
 	 *
 	 * <code>
@@ -611,7 +652,7 @@ class ActiveRecord_Validations
 
 	private function is_blank_with_option($var, &$options)
 	{
-		return (Utils::is_blank($var) && (isset($options['allow_blank']) && $options['allow_blank']));
+		return (ActiveRecord_Utils::is_blank($var) && (isset($options['allow_blank']) && $options['allow_blank']));
 	}
 }
 
@@ -846,7 +887,10 @@ class ActiveRecord_Errors implements IteratorAggregate
 	 */
 	public function __toString()
 	{
-		return implode("\n", $this->full_messages());
+		$messages = array();
+		foreach($this->full_messages() as $fields)
+			$messages[] = implode("\n", $fields);
+		return implode("\n", $messages);
 	}
 
 	/**
