@@ -1254,8 +1254,17 @@ class ActiveRecord_Model
 			// is a normal field on the table
 			if (array_key_exists($name,$table->columns))
 			{
-				$value = $table->columns[$name]->cast($value,$connection);
 				$name = $table->columns[$name]->inflected_name;
+
+				$static_serialize = eval('return ' . get_class($this) . '::$serialize;');
+				$static_serialize_found = false;
+				foreach ($static_serialize as $serialize_index => $serialize_value)
+				{
+					$field_name = is_numeric($serialize_index) ? $serialize_value : $serialize_index;
+					if ($name == $field_name) $static_serialize_found = true;
+				}
+				if (!$static_serialize_found)
+					$value = $table->columns[$name]->cast($value,$connection);
 			}
 
 			if ($guard_attributes)
