@@ -490,6 +490,11 @@ class Model
 		if ($value instanceof DateTime)
 			$value->attribute_of($this,$name);
 
+		// if the field values hasn't changed then don't update the value
+		// and also don't flag the attribute as dirty
+		if (isset($this->attributes[$name]) && $this->attributes[$name] === $value)
+			return $value;
+
 		$this->attributes[$name] = $value;
 		$this->flag_dirty($name);
 		return $value;
