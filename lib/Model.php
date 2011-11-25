@@ -478,7 +478,7 @@ class Model
 	{
 		$table = static::table();
 
-		if (array_key_exists($name,$table->columns) && !is_object($value))
+		if (array_key_exists($name,$table->columns) && !is_object($value) && !in_array($name, static::$serialize))
 			$value = $table->columns[$name]->cast($value,static::connection());
 
 		// convert php's \DateTime to ours
