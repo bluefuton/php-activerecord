@@ -295,16 +295,19 @@ class ActiveRecord_Model
 			$name      =  is_numeric($name) ? $formatter : $name;
 			$formatter = !is_numeric($name) ? $formatter : 'php';
 
-			switch($formatter) {
-				case 'json':
-					$this->attributes[$name] = json_encode($this->attributes[$name]);
-					break;
+			if (isset($this->attributes[$name]))
+			{
+				switch($formatter) {
+					case 'json':
+						$this->attributes[$name] = json_encode($this->attributes[$name]);
+						break;
 
-				default:
-					$this->attributes[$name] = serialize($this->attributes[$name]);
+					default:
+						$this->attributes[$name] = serialize($this->attributes[$name]);
+				}
+
+				$this->flag_dirty($name);
 			}
-
-			$this->flag_dirty($name);
 		}
 	}
 
@@ -319,16 +322,19 @@ class ActiveRecord_Model
 			$name      =  is_numeric($name) ? $formatter : $name;
 			$formatter = !is_numeric($name) ? $formatter : 'php';
 
-			switch($formatter) {
-				case 'json':
-					$this->attributes[$name] = json_decode($this->attributes[$name], true);
-					break;
+			if (isset($this->attributes[$name]))
+			{
+				switch($formatter) {
+					case 'json':
+						$this->attributes[$name] = json_decode($this->attributes[$name], true);
+						break;
 
-				default:
-					$this->attributes[$name] = unserialize($this->attributes[$name]);
+					default:
+						$this->attributes[$name] = unserialize($this->attributes[$name]);
+				}
+
+				$this->flag_dirty($name);
 			}
-
-			$this->flag_dirty($name);
 		}
 	}
 
